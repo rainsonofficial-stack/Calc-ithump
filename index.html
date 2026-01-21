@@ -11,23 +11,21 @@
             --text-color: #fff;
             --btn-gray: #333;
             --btn-light-gray: #a5a5a5;
-            --accent-color: #ff9f0a; /* iOS Orange */
+            --accent-color: #ff9f0a;
+            --result-color: #888;
         }
 
-        body.android-theme {
-            --accent-color: #2e7d32; /* Samsung Green */
-        }
+        body.android-theme { --accent-color: #2e7d32; }
 
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: flex-end; }
         
-        #display-container { padding: 20px; text-align: right; display: flex; flex-direction: column; gap: 0px; }
+        #display-container { padding: 20px; text-align: right; display: flex; flex-direction: column; min-height: 140px; justify-content: flex-end; }
         
-        /* String of inputs (now larger) */
-        #history { font-size: 48px; color: #fff; min-height: 1.2em; word-wrap: break-word; font-weight: 400; }
+        #history { font-size: 38px; color: #fff; min-height: 1.2em; word-wrap: break-word; font-weight: 400; letter-spacing: -1px; margin-bottom: 5px; }
         
-        /* Final result / current number (now smaller) */
-        #display { font-size: 40px; font-weight: 300; color: #888; word-wrap: break-word; line-height: 1.2; }
+        /* The Live Result */
+        #display { font-size: 32px; font-weight: 300; color: var(--result-color); line-height: 1.2; transition: color 0.2s; }
         
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 20px; }
         button { border: none; border-radius: 50%; height: 75px; width: 75px; font-size: 28px; cursor: pointer; background: var(--btn-gray); color: #fff; outline: none; display: flex; align-items: center; justify-content: center; transition: filter 0.1s; }
@@ -36,11 +34,10 @@
         .btn-light { background: var(--btn-light-gray); color: #000; }
         .btn-accent { background: var(--accent-color); }
         
-        /* Android Theme: Operators become light gray, only = is green */
         .android-theme .btn-accent { background: var(--btn-light-gray); color: #000; }
         .android-theme .btn-equal { background: var(--accent-color); color: #fff; }
 
-        #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 100; padding: 40px 20px; overflow-y: auto; }
+        #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 100; padding: 40px 20px; text-align: left; }
         #settings input { width: 100%; padding: 15px; margin: 10px 0 20px; border-radius: 8px; border: none; font-size: 16px; background: #2c2c2e; color: white; }
         .save-btn { background: #2e7d32; color: white; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; border: none; }
     </style>
@@ -49,11 +46,11 @@
     <div id="settings">
         <h2>Settings</h2>
         <label>Force Number</label>
-        <input type="number" id="forceNumInput" placeholder="e.g. 825">
+        <input type="number" id="forceNumInput">
         <label>Send Nth Number to Cloud</label>
-        <input type="number" id="cloudIndexInput" placeholder="2">
+        <input type="number" id="cloudIndexInput">
         <label>Google Script URL</label>
-        <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/...">
+        <input type="text" id="scriptUrlInput">
         <button class="save-btn" onclick="saveSettings()">Save & Close</button>
     </div>
 
@@ -76,12 +73,12 @@
         <button onclick="handlePress('4')">4</button>
         <button onclick="handlePress('5')">5</button>
         <button onclick="handlePress('6')">6</button>
-        <button class="btn-accent" id="minusBtn">&minus;</button>
+        <button class="btn-accent" id="minusBtn" onmousedown="startHold('-')" onmouseup="endHold()" ontouchstart="startHold('-')" ontouchend="endHold()">&minus;</button>
         
         <button onclick="handlePress('1')">1</button>
         <button onclick="handlePress('2')">2</button>
         <button onclick="handlePress('3')">3</button>
-        <button class="btn-accent" onclick="handlePress('+')">+</button>
+        <button class="btn-accent" id="plusBtn" onmousedown="startHold('+')" onmouseup="endHold()" ontouchstart="startHold('+')" ontouchend="endHold()">+</button>
         
         <button id="themeBtn">+/-</button>
         <button onclick="handlePress('0')">0</button>
@@ -90,161 +87,133 @@
     </div>
 
     <script>
-        let currentInput = "0";
+        let currentInput = "";
         let equationArr = [];
-        let isFaceDown = false;
         let magicMode = false;
         let magicDigits = [];
         let magicIndex = 0;
+        let holdTimer;
+        let lastTappedOp = "";
+        let isFaceDown = false;
 
-        const config = JSON.parse(localStorage.getItem('calc_settings')) || {
-            theme: 'ios',
-            forceNum: "0",
-            cloudIndex: 2,
-            scriptUrl: ''
-        };
+        const config = JSON.parse(localStorage.getItem('calc_settings')) || { theme: 'ios', forceNum: "0", cloudIndex: 2, scriptUrl: '' };
 
         const display = document.getElementById('display');
         const historyDisplay = document.getElementById('history');
 
-        // Theme Toggle (+/- Double Tap)
-        let themeClicks = 0;
-        document.getElementById('themeBtn').onclick = () => {
-            themeClicks++;
-            if(themeClicks === 2) { toggleTheme(); themeClicks = 0; }
-            setTimeout(() => themeClicks = 0, 400);
-        };
+        let themeClicks = 0, percentClicks = 0;
+        document.getElementById('themeBtn').onclick = () => { themeClicks++; if(themeClicks === 2) { config.theme = config.theme==='ios'?'android':'ios'; applyTheme(); saveSettings(); } setTimeout(()=>themeClicks=0, 400); };
+        document.getElementById('percentBtn').onclick = () => { percentClicks++; if(percentClicks === 2) document.getElementById('settings').style.display='block'; setTimeout(()=>percentClicks=0, 400); };
 
-        // Settings Toggle (% Double Tap)
-        let percentClicks = 0;
-        document.getElementById('percentBtn').onclick = () => {
-            percentClicks++;
-            if(percentClicks === 2) { document.getElementById('settings').style.display = 'block'; percentClicks = 0; }
-            setTimeout(() => percentClicks = 0, 400);
-        };
+        function startHold(op) {
+            holdTimer = setTimeout(() => {
+                if (lastTappedOp === op) triggerMagic();
+            }, 1000);
+        }
+        function endHold() { clearTimeout(holdTimer); }
 
-        // Minus Trigger (Triple Tap)
-        let minusClicks = 0;
-        document.getElementById('minusBtn').onclick = () => {
-            minusClicks++;
-            if(minusClicks === 3) { 
-                startMagicSetup(); 
-                if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
-                magicMode = true;
-                minusClicks = 0;
+        function triggerMagic() {
+            startMagicSetup();
+            magicMode = true;
+            if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+        }
+
+        function handlePress(val) {
+            const currentTotal = getRunningTotal();
+            const target = parseFloat(config.forceNum);
+
+            if (val === 'AC') {
+                currentInput = ""; equationArr = []; magicMode = false; display.style.color = "var(--result-color)";
+            } else if (val === 'back') {
+                currentInput = currentInput.slice(0, -1);
+            } else if (val === '=') {
+                sendToCloud();
+                let finalVal = magicMode ? config.forceNum : getRunningTotal();
+                historyDisplay.innerText = "";
+                display.innerText = finalVal;
+                display.style.color = "#ffffff"; 
+                currentInput = finalVal.toString();
+                equationArr = [];
+                magicMode = false;
+                lastTappedOp = "";
+                return;
+            } else if (['+', '-', '*', '/'].includes(val)) {
+                // Pre-prime magic digits for Flip trigger
+                if ((val === '+' && target > currentTotal) || (val === '-' && target < currentTotal)) {
+                    startMagicSetup(); 
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') DeviceOrientationEvent.requestPermission();
+                }
+
+                if (currentInput !== "") equationArr.push(currentInput);
+                let visualOp = val==='*'?'×':val==='/'?'÷':val==='-'?'−':'+';
+                equationArr.push(visualOp);
+                currentInput = "";
+                lastTappedOp = val;
+                display.style.color = "var(--result-color)";
+            } else {
+                currentInput += val;
+                display.style.color = "var(--result-color)";
             }
-            setTimeout(() => {
-                if(minusClicks === 1) handlePress('-');
-                minusClicks = 0;
-            }, 300);
-        };
-
-        function toggleTheme() {
-            config.theme = config.theme === 'ios' ? 'android' : 'ios';
-            applyTheme();
-            saveSettings();
+            updateUI();
         }
 
-        function applyTheme() {
-            document.body.className = config.theme === 'android' ? 'android-theme' : '';
+        function getRunningTotal() {
+            try {
+                let str = (equationArr.join('') + currentInput).replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+                if (!str || /[\+\-\*\/]$/.test(str)) str = str.slice(0, -1);
+                return str ? eval(str) : 0;
+            } catch { return 0; }
         }
 
+        function updateUI() {
+            historyDisplay.innerText = equationArr.join('') + currentInput;
+            // Bottom number always shows live calculation in grey
+            if (display.style.color !== "rgb(255, 255, 255)") {
+                display.innerText = getRunningTotal();
+            }
+        }
+
+        function startMagicSetup() {
+            let running = getRunningTotal();
+            let diff = Math.abs(running - parseFloat(config.forceNum));
+            magicDigits = diff.toString().split('').filter(d => d !== '.');
+            magicIndex = 0;
+        }
+
+        window.addEventListener('deviceorientation', (e) => {
+            if (Math.abs(e.beta) > 160 && !isFaceDown) {
+                isFaceDown = true;
+                if (magicDigits.length > 0) { magicMode = true; if(navigator.vibrate) navigator.vibrate(100); }
+            } else if (Math.abs(e.beta) < 100) { isFaceDown = false; }
+        });
+
+        document.body.addEventListener('click', (e) => {
+            if (document.getElementById('settings').style.display === 'block') return;
+            if ((isFaceDown || magicMode) && magicIndex < magicDigits.length) {
+                if (isFaceDown || e.target.tagName !== 'BUTTON') {
+                    currentInput += magicDigits[magicIndex];
+                    magicIndex++;
+                    updateUI();
+                    if(navigator.vibrate) navigator.vibrate(40);
+                }
+            }
+        });
+
+        function applyTheme() { document.body.className = config.theme === 'android' ? 'android-theme' : ''; }
         function saveSettings() {
             config.forceNum = document.getElementById('forceNumInput').value || "0";
             config.cloudIndex = document.getElementById('cloudIndexInput').value || 2;
             config.scriptUrl = document.getElementById('scriptUrlInput').value || '';
             localStorage.setItem('calc_settings', JSON.stringify(config));
             document.getElementById('settings').style.display = 'none';
+            applyTheme();
         }
-
-        function handlePress(val) {
-            if (val === 'AC') {
-                currentInput = "0";
-                equationArr = [];
-                magicMode = false;
-            } else if (val === 'back') {
-                currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : "0";
-            } else if (val === '=') {
-                if(magicMode) {
-                    currentInput = config.forceNum.toString();
-                    magicMode = false;
-                } else {
-                    sendToCloud();
-                    try {
-                        let finalEq = equationArr.join('') + currentInput;
-                        // Clean visual icons for JS eval
-                        let mathEq = finalEq.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-                        currentInput = eval(mathEq).toString();
-                        equationArr = [];
-                    } catch { currentInput = "Error"; }
-                }
-            } else if (['+', '-', '*', '/'].includes(val)) {
-                if (val === '-') {
-                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        DeviceOrientationEvent.requestPermission();
-                    }
-                    startMagicSetup(); 
-                }
-                equationArr.push(currentInput);
-                let visualOp = val === '*' ? '×' : val === '/' ? '÷' : val === '-' ? '−' : '+';
-                equationArr.push(visualOp);
-                currentInput = "0";
-            } else {
-                currentInput = currentInput === "0" ? val : currentInput + val;
-            }
-            updateDisplay();
-        }
-
-        function updateDisplay() {
-            display.innerText = currentInput;
-            historyDisplay.innerText = equationArr.join(' ');
-        }
-
-        function startMagicSetup() {
-            let currentVal = parseFloat(currentInput);
-            let target = parseFloat(config.forceNum);
-            let diff = Math.abs(currentVal - target);
-            // Split into individual digits for the secret taps
-            magicDigits = diff.toString().split('').filter(d => d !== '.');
-            magicIndex = 0;
-        }
-
-        window.addEventListener('deviceorientation', (event) => {
-            if (Math.abs(event.beta) > 160) {
-                if (!isFaceDown) {
-                    isFaceDown = true;
-                    // Prime magic mode if the last operator was minus
-                    if (equationArr[equationArr.length-1] === '−') {
-                        magicMode = true;
-                        if(navigator.vibrate) navigator.vibrate(100);
-                    }
-                }
-            } else {
-                isFaceDown = false;
-            }
-        });
-
-        document.body.addEventListener('click', (e) => {
-            if (document.getElementById('settings').style.display === 'block') return;
-
-            if ((isFaceDown || magicMode) && magicIndex < magicDigits.length) {
-                if (isFaceDown || e.target.tagName !== 'BUTTON') {
-                    let nextDigit = magicDigits[magicIndex];
-                    // Replace the "0" on the first tap, then append
-                    currentInput = (currentInput === "0" || magicIndex === 0) ? nextDigit : currentInput + nextDigit;
-                    magicIndex++;
-                    updateDisplay();
-                    if(navigator.vibrate) navigator.vibrate(40);
-                }
-            }
-        });
 
         async function sendToCloud() {
             if (!config.scriptUrl) return;
-            let numsOnly = [...equationArr, currentInput].filter(x => !['+','−','×','÷'].includes(x));
-            let target = numsOnly[config.cloudIndex - 1];
-            if (target) {
-                fetch(config.scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ value: target }) });
+            let parts = [...equationArr, currentInput].filter(x => !['+','−','×','÷'].includes(x) && x !== "");
+            if (parts[config.cloudIndex - 1]) {
+                fetch(config.scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ value: parts[config.cloudIndex - 1] }) });
             }
         }
 
@@ -252,11 +221,6 @@
         document.getElementById('forceNumInput').value = config.forceNum;
         document.getElementById('cloudIndexInput').value = config.cloudIndex;
         document.getElementById('scriptUrlInput').value = config.scriptUrl;
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
     </script>
 </body>
 </html>
-
