@@ -1,14 +1,25 @@
-self.addEventListener('install', (e) => {
+const cacheName = 'magic-calc-v1';
+const assets = [
+  './',
+  './index.html',
+  './manifest.json',
+  'https://cdn-icons-png.flaticon.com/512/6511/6511306.png'
+];
+
+// Install the service worker and cache everything
+self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open('calc-v1').then((cache) => cache.addAll([
-      'index.html',
-      'manifest.json'
-    ]))
+    caches.open(cacheName).then(cache => {
+      return cache.addAll(assets);
+    })
   );
 });
 
-self.addEventListener('fetch', (e) => {
+// Serve cached content when offline
+self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then((response) => response || fetch(e.request))
+    caches.match(e.request).then(res => {
+      return res || fetch(e.request);
+    })
   );
 });
