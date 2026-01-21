@@ -116,7 +116,15 @@
 
         // Logic to intercept ALL clicks when magicMode is active
         window.addEventListener('click', (e) => {
-            if (magicMode && magicIndex < magicDigits.length) {
+            if (magicMode) {
+                // If more taps than digits, ignore everything except "="
+                if (magicIndex >= magicDigits.length) {
+                    if (e.target.innerText === '=') return;
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    return; // DO NOTHING
+                }
+
                 if (e.target.innerText === '=') return;
 
                 e.stopImmediatePropagation();
@@ -125,7 +133,7 @@
                 currentInput += magicDigits[magicIndex];
                 magicIndex++;
                 
-                // DISAPPEAR DOT logic: If no more digits left to tap
+                // Hide dot when finished
                 if (magicIndex >= magicDigits.length) {
                     indicator.style.display = 'none';
                 }
@@ -179,7 +187,7 @@
                 equationArr = [];
                 magicMode = false;
                 lastTappedOp = "";
-                indicator.style.display = 'none'; // Ensure it's gone on equals
+                indicator.style.display = 'none';
                 return;
             } else if (['+', '-', '*', '/'].includes(val)) {
                 if ((val === '+' && target > currentTotal) || (val === '-' && target < currentTotal)) {
@@ -266,4 +274,3 @@
     </script>
 </body>
 </html>
-
