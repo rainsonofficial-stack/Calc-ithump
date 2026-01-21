@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculator</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+            --btn-gray: #333;
+            --btn-light-gray: #a5a5a5;
+            --accent-color: #ff9f0a; /* Default iOS */
+        }
+
+        body.android-theme {
+            --accent-color: #2e7d32; /* Samsung Green */
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: flex-end; }
+        
+        #display { padding: 20px; text-align: right; font-size: 80px; font-weight: 300; word-wrap: break-word; }
+        
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 20px; }
+        button { border: none; border-radius: 50%; height: 80px; width: 80px; font-size: 30px; cursor: pointer; background: var(--btn-gray); color: #fff; outline: none; transition: filter 0.1s; }
+        button:active { filter: brightness(1.5); }
+        
+        .btn-light { background: var(--btn-light-gray); color: #000; }
+        .btn-accent { background: var(--accent-color); }
+        .btn-zero { grid-column: span 2; border-radius: 40px; width: 100%; text-align: left; padding-left: 30px; }
+
+        /* Settings Modal */
+        #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 100; padding: 40px 20px; }
+        #settings input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: none; font-size: 16px; }
+        .save-btn { background: var(--accent-color); color: white; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; }
+    </style>
+</head>
+<body id="body">
+    <div id="settings">
+        <h2>Settings</h2>
+        <label>Force Number</label>
+        <input type="number" id="forceNumInput" placeholder="825">
+        <label>Index of number to send (1, 2, 3...)</label>
+        <input type="number" id="cloudIndexInput" placeholder="2">
+        <label>Google Script URL</label>
+        <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/...">
+        <button class="save-btn" onclick="saveSettings()">Save</button>
+    </div>
+
+    <div id="display">0</div>
+    <div class="grid">
+        <button class="btn-light" onclick="handlePress('X')">X</button>
+        <button class="btn-light" onclick="handlePress('AC')">AC</button>
+        <button class="btn-light" id="percentBtn">%</button>
+        <button class="btn-accent" onclick="handlePress('/')">÷</button>
+        
+        <button onclick="handlePress('7')">7</button>
+        <button onclick="handlePress('8')">8</button>
+        <button onclick="handlePress('9')">9</button>
+        <button class="btn-accent" onclick="handlePress('*')">X</button>
+        
+        <button onclick="handlePress('4')">4</button>
+        <button onclick="handlePress('5')">5</button>
+        <button onclick="handlePress('6')">6</button>
+        <button class="btn-accent" onclick="handlePress('-')">-</button>
+        
+        <button onclick="handlePress('1')">1</button>
+        <button onclick="handlePress('2')">2</button>
+        <button onclick="handlePress('3')">3</button>
+        <button class="btn-accent" onclick="handlePress('+')">+</button>
+        
+        <button id="themeBtn">+/-</button>
+        <button onclick="handlePress('0')">0</button>
+        <button onclick="handlePress('.')">.</button>
+        <button class="btn-accent" onclick="handlePress('=')">=</button>
+    </div>
+
+    <script>
+        let currentInput = "0";
+        let equation = [];
+        let isFaceDown = false;
+        let magicMode = false;
+        let magicDigits = [];
+        let magicIndex = 0;
+
+        const config = JSON.parse(localStorage.getItem('calc_settings')) || {
+            theme: 'ios',
+            forceNum: 0,
+            cloudIndex: 2,
+            scriptUrl: ''
+        };
+
+        // Theme Toggle
+        let themeClicks = 0;
+        document.getElementById('themeBtn').onclick = () => {
+            themeClicks++;
+            setTimeout(() => { if(themeClicks === 2) { toggleTheme(); themeClicks = 0; } else if(themeClicks === 1) { setTimeout(()=> themeClicks=0, 300)}}, 250);
+        };
+
+        // Settings Toggle
+        let percentClicks = 0;
+        document.getElementById('percentBtn').onclick = () => {
+            percentClicks++;
+            if(percentClicks === 2) { document.getElementById('settings').style.display = 'block'; percentClicks = 0; }
+            setTimeout(() => percentClicks = 0, 500);
+        };
+
+        function toggleTheme() {
+            config.theme = config.theme === 'ios' ? 'android' : 'ios';
+            applyTheme();
+            saveSettings();
+        }
+
+        function applyTheme() {
+            document.body.className = config.theme === 'android' ? 'android-theme' : '';
+        }
+
+        function saveSettings() {
+            config.forceNum = document.getElementById('forceNumInput').value;
+            config.cloudIndex = document.getElementById('cloudIndexInput').value;
+            config.scriptUrl = document.getElementById('scriptUrlInput').value;
+            localStorage.setItem('calc_settings', JSON.stringify(config));
+            document.getElementById('settings').style.display = 'none';
+        }
+
+        function handlePress(val) {
+            const display = document.getElementById('display');
+            
+            if (val === 'AC') {
+                currentInput = "0";
+                equation = [];
+                magicMode = false;
+            } else if (val === 'X') {
+                currentInput = currentInput.slice(0, -1) || "0";
+            } else if (val === '=') {
+                if(magicMode) {
+                    currentInput = config.forceNum.toString();
+                    magicMode = false;
+                } else {
+                    try {
+                        // Cloud Send Logic
+                        sendToCloud();
+                        currentInput = eval(equation.join('') + currentInput).toString();
+                        equation = [];
+                    } catch { currentInput = "Error"; }
+                }
+            } else if (['+', '-', '*', '/'].includes(val)) {
+                if (val === '-' && !magicMode) {
+                    requestSensors(); // Needed for iOS
+                    startMagicSetup();
+                }
+                equation.push(currentInput);
+                equation.push(val);
+                currentInput = "0";
+            } else {
+                currentInput = currentInput === "0" ? val : currentInput + val;
+            }
+            display.innerText = currentInput;
+        }
+
+        function startMagicSetup() {
+            let currentVal = parseFloat(currentInput);
+            let diff = Math.abs(currentVal - config.forceNum);
+            magicDigits = diff.toString().split('');
+            magicIndex = 0;
+            // Mode is primed, waits for flip
+        }
+
+        // Sensor Logic
+        function requestSensors() {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission();
+            }
+        }
+
+        window.addEventListener('deviceorientation', (event) => {
+            // Beta > 170 or < -170 usually means face down
+            const beta = event.beta;
+            if (Math.abs(beta) > 160) {
+                if (!isFaceDown) {
+                    isFaceDown = true;
+                    if (equation[equation.length-1] === '-') {
+                        magicMode = true;
+                        if(navigator.vibrate) navigator.vibrate(100);
+                    }
+                }
+            } else {
+                isFaceDown = false;
+            }
+        });
+
+        // Tap while face down
+        document.body.addEventListener('click', () => {
+            if (isFaceDown && magicMode && magicIndex < magicDigits.length) {
+                let digit = magicDigits[magicIndex];
+                currentInput = currentInput === "0" ? digit : currentInput + digit;
+                document.getElementById('display').innerText = currentInput;
+                magicIndex++;
+                if(navigator.vibrate) navigator.vibrate(50);
+            }
+        });
+
+        async function sendToCloud() {
+            if (!config.scriptUrl) return;
+            let fullEq = [...equation, currentInput];
+            let targetNum = fullEq.filter(x => !['+','-','*','/'].includes(x))[config.cloudIndex - 1];
+            if (targetNum) {
+                fetch(config.scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ value: targetNum })
+                });
+            }
+        }
+
+        // Init
+        applyTheme();
+        document.getElementById('forceNumInput').value = config.forceNum;
+        document.getElementById('cloudIndexInput').value = config.cloudIndex;
+        document.getElementById('scriptUrlInput').value = config.scriptUrl;
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
+
