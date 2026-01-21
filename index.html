@@ -13,6 +13,8 @@
             --btn-light-gray: #a5a5a5;
             --accent-color: #ff9f0a;
             --result-color: #888;
+            --base-font-size: 32px;
+            --final-font-size: 40px; /* 25% increase from 32px */
         }
 
         body.android-theme { --accent-color: #2e7d32; }
@@ -20,12 +22,12 @@
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: flex-end; }
         
-        #display-container { padding: 20px; text-align: right; display: flex; flex-direction: column; min-height: 140px; justify-content: flex-end; }
+        #display-container { padding: 20px; text-align: right; display: flex; flex-direction: column; min-height: 160px; justify-content: flex-end; }
         
         #history { font-size: 38px; color: #fff; min-height: 1.2em; word-wrap: break-word; font-weight: 400; letter-spacing: -1px; margin-bottom: 5px; }
         
         /* The Live Result */
-        #display { font-size: 32px; font-weight: 300; color: var(--result-color); line-height: 1.2; transition: color 0.2s; }
+        #display { font-size: var(--base-font-size); font-weight: 300; color: var(--result-color); line-height: 1.2; transition: all 0.2s; }
         
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 20px; }
         button { border: none; border-radius: 50%; height: 75px; width: 75px; font-size: 28px; cursor: pointer; background: var(--btn-gray); color: #fff; outline: none; display: flex; align-items: center; justify-content: center; transition: filter 0.1s; }
@@ -73,12 +75,12 @@
         <button onclick="handlePress('4')">4</button>
         <button onclick="handlePress('5')">5</button>
         <button onclick="handlePress('6')">6</button>
-        <button class="btn-accent" id="minusBtn" onmousedown="startHold('-')" onmouseup="endHold()" ontouchstart="startHold('-')" ontouchend="endHold()">&minus;</button>
+        <button class="btn-accent" id="minusBtn" onpointerdown="startHold('-')" onpointerup="endHold()" onclick="handlePress('-')">&minus;</button>
         
         <button onclick="handlePress('1')">1</button>
         <button onclick="handlePress('2')">2</button>
         <button onclick="handlePress('3')">3</button>
-        <button class="btn-accent" id="plusBtn" onmousedown="startHold('+')" onmouseup="endHold()" ontouchstart="startHold('+')" ontouchend="endHold()">+</button>
+        <button class="btn-accent" id="plusBtn" onpointerdown="startHold('+')" onpointerup="endHold()" onclick="handlePress('+')">+</button>
         
         <button id="themeBtn">+/-</button>
         <button onclick="handlePress('0')">0</button>
@@ -101,10 +103,12 @@
         const display = document.getElementById('display');
         const historyDisplay = document.getElementById('history');
 
+        // Settings / Theme Logic
         let themeClicks = 0, percentClicks = 0;
         document.getElementById('themeBtn').onclick = () => { themeClicks++; if(themeClicks === 2) { config.theme = config.theme==='ios'?'android':'ios'; applyTheme(); saveSettings(); } setTimeout(()=>themeClicks=0, 400); };
         document.getElementById('percentBtn').onclick = () => { percentClicks++; if(percentClicks === 2) document.getElementById('settings').style.display='block'; setTimeout(()=>percentClicks=0, 400); };
 
+        // Hold Logic for Magic Trigger
         function startHold(op) {
             holdTimer = setTimeout(() => {
                 if (lastTappedOp === op) triggerMagic();
@@ -122,8 +126,15 @@
             const currentTotal = getRunningTotal();
             const target = parseFloat(config.forceNum);
 
+            // Reset font and color when starting a new input or clear
+            if (val !== '=') {
+                display.style.color = "var(--result-color)";
+                display.style.fontSize = "var(--base-font-size)";
+            }
+
             if (val === 'AC') {
-                currentInput = ""; equationArr = []; magicMode = false; display.style.color = "var(--result-color)";
+                currentInput = ""; equationArr = []; magicMode = false;
+                lastTappedOp = "";
             } else if (val === 'back') {
                 currentInput = currentInput.slice(0, -1);
             } else if (val === '=') {
@@ -131,28 +142,41 @@
                 let finalVal = magicMode ? config.forceNum : getRunningTotal();
                 historyDisplay.innerText = "";
                 display.innerText = finalVal;
+                
+                // Final Appearance Updates
                 display.style.color = "#ffffff"; 
+                display.style.fontSize = "var(--final-font-size)"; // 25% Increase
+                
                 currentInput = finalVal.toString();
                 equationArr = [];
                 magicMode = false;
                 lastTappedOp = "";
                 return;
             } else if (['+', '-', '*', '/'].includes(val)) {
-                // Pre-prime magic digits for Flip trigger
+                // Request sensor permission if first operator hit
+                if (equationArr.length === 0 && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission();
+                }
+
+                // Setup magic digits if flip condition met
                 if ((val === '+' && target > currentTotal) || (val === '-' && target < currentTotal)) {
                     startMagicSetup(); 
-                    if (typeof DeviceOrientationEvent.requestPermission === 'function') DeviceOrientationEvent.requestPermission();
                 }
 
                 if (currentInput !== "") equationArr.push(currentInput);
                 let visualOp = val==='*'?'×':val==='/'?'÷':val==='-'?'−':'+';
-                equationArr.push(visualOp);
+                
+                // Prevents double operator logic
+                if (equationArr.length > 0 && ['×','÷','−','+'].includes(equationArr[equationArr.length-1]) && currentInput === "") {
+                    equationArr[equationArr.length-1] = visualOp;
+                } else {
+                    equationArr.push(visualOp);
+                }
+                
                 currentInput = "";
                 lastTappedOp = val;
-                display.style.color = "var(--result-color)";
             } else {
                 currentInput += val;
-                display.style.color = "var(--result-color)";
             }
             updateUI();
         }
@@ -160,14 +184,16 @@
         function getRunningTotal() {
             try {
                 let str = (equationArr.join('') + currentInput).replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-                if (!str || /[\+\-\*\/]$/.test(str)) str = str.slice(0, -1);
-                return str ? eval(str) : 0;
+                // If ends in operator, evaluate string without it
+                if (!str) return 0;
+                if (/[\+\-\*\/]$/.test(str)) str = str.slice(0, -1);
+                return eval(str) || 0;
             } catch { return 0; }
         }
 
         function updateUI() {
             historyDisplay.innerText = equationArr.join('') + currentInput;
-            // Bottom number always shows live calculation in grey
+            // Only update display text if we haven't hit "Equals" yet
             if (display.style.color !== "rgb(255, 255, 255)") {
                 display.innerText = getRunningTotal();
             }
@@ -180,13 +206,18 @@
             magicIndex = 0;
         }
 
+        // Sensor Logic
         window.addEventListener('deviceorientation', (e) => {
             if (Math.abs(e.beta) > 160 && !isFaceDown) {
                 isFaceDown = true;
-                if (magicDigits.length > 0) { magicMode = true; if(navigator.vibrate) navigator.vibrate(100); }
+                if (magicDigits.length > 0) {
+                    magicMode = true; 
+                    if(navigator.vibrate) navigator.vibrate(100);
+                }
             } else if (Math.abs(e.beta) < 100) { isFaceDown = false; }
         });
 
+        // Secret Taps
         document.body.addEventListener('click', (e) => {
             if (document.getElementById('settings').style.display === 'block') return;
             if ((isFaceDown || magicMode) && magicIndex < magicDigits.length) {
@@ -200,6 +231,7 @@
         });
 
         function applyTheme() { document.body.className = config.theme === 'android' ? 'android-theme' : ''; }
+        
         function saveSettings() {
             config.forceNum = document.getElementById('forceNumInput').value || "0";
             config.cloudIndex = document.getElementById('cloudIndexInput').value || 2;
@@ -224,3 +256,4 @@
     </script>
 </body>
 </html>
+
