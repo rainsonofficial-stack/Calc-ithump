@@ -1,3 +1,4 @@
+
 {
   "name": "Calculator",
   "short_name": "Calculator",
@@ -7,10 +8,9 @@
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/6511/6511306.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/564/564429.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     }
   ]
 }
