@@ -73,7 +73,7 @@
     <script>
         let currentInput = "", equationArr = [], magicMode = false, magicDigits = [], magicIndex = 0;
         let holdTimer, equalHoldTimer, lastTappedOp = "", isFaceDown = false, masterActive = false, equalHoldTriggered = false;
-        let themeClicks = 0, percentClicks = 0;
+        let themeClicks = 0, percentClicks = 0, justEvaluated = false;
 
         const defaultConfig = { theme:'ios', activeSlot:'f1', f1:"0", f2:"0", f3:"0", f4:"0", f5:"0", cloudIndex:2, scriptUrl:'' };
         const config = JSON.parse(localStorage.getItem('calc_settings')) || defaultConfig;
@@ -125,12 +125,16 @@
                 if (val === '=') { if (equalHoldTriggered) evaluate(); else inject(); }
                 return;
             }
+            
+            // If user types a number or operator after evaluation, reset the lock
+            justEvaluated = false; 
+
             const cur = getTotal(), tgt = parseFloat(config[config.activeSlot] || 0);
             if (val !== '=') { display.style.color = "var(--result-color)"; display.style.fontSize = "var(--base-font-size)"; }
             
             if (val === 'AC') { currentInput = ""; equationArr = []; magicMode = false; lastTappedOp = ""; indicator.style.display = 'none'; }
             else if (val === 'back') { if (currentInput !== "") currentInput = currentInput.slice(0, -1); else if (equationArr.length > 0) equationArr.pop(); }
-            else if (val === '=') { evaluate(); } 
+            else if (val === '=') { evaluate(); return; } 
             else if (['+', '-', '*', '/'].includes(val)) {
                 if (masterActive && ((val === '+' && tgt > cur) || (val === '-' && tgt < cur))) setup();
                 let op = val==='*'?'×':val==='/'?'÷':val==='-'?'−':'+';
@@ -151,15 +155,16 @@
             let res = isM ? config[config.activeSlot] : getTotal();
             if (isM) { masterActive = false; document.getElementById('masterToggle').checked = false; }
             
-            // FIX: Clear history line completely and show only big result
+            // Clear UI immediately
             historyDisplay.innerHTML = ""; 
             display.innerText = res;
             display.style.color = "#fff"; display.style.fontSize = "var(--final-font-size)";
             
-            // Set current state to the result but don't let updateUI put it back in the top line
+            // Prepare for next string
             currentInput = res.toString(); 
             equationArr = []; 
             magicMode = false; magicIndex = 0; lastTappedOp = ""; indicator.style.display = 'none';
+            justEvaluated = true; // Lock history line until next press
         }
 
         function getTotal() {
@@ -172,8 +177,7 @@
         }
 
         function updateUI() {
-            // Only update history if the display isn't currently showing a final white result
-            if (display.style.color === "rgb(255, 255, 255)") return;
+            if (justEvaluated) return; // Prevent history from showing the result twice
 
             let h = "", t = "";
             const pr = (c) => {
@@ -241,3 +245,4 @@
     </script>
 </body>
 </html>
+
