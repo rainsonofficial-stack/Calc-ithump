@@ -125,6 +125,17 @@
             if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
         }
 
+        // INSTANT VIBRATION ON CONTACT
+        window.addEventListener('pointerdown', (e) => {
+            if (e.target.tagName === 'BUTTON' || magicMode) {
+                if (magicMode && magicIndex >= magicDigits.length) {
+                    // Lock haptics if taps are finished in magic mode
+                    return; 
+                }
+                subtleVibrate();
+            }
+        }, true);
+
         window.addEventListener('click', (e) => {
             if (magicMode) {
                 e.stopImmediatePropagation();
@@ -134,7 +145,6 @@
                     magicIndex++;
                     if (magicIndex >= magicDigits.length) indicator.style.display = 'none';
                     updateUI();
-                    subtleVibrate();
                 }
             }
         }, true);
@@ -157,7 +167,6 @@
         function endEqualHold() { clearTimeout(equalHoldTimer); }
 
         function handlePress(val) {
-            subtleVibrate();
             const currentTotal = getRunningTotal();
             const target = parseFloat(config.forceNum);
             if (val !== '=') { display.style.color = "var(--result-color)"; display.style.fontSize = "var(--base-font-size)"; }
@@ -246,4 +255,3 @@
     </script>
 </body>
 </html>
-
