@@ -25,7 +25,6 @@
         
         #display-container { padding: 20px; text-align: right; display: flex; flex-direction: column; min-height: 180px; justify-content: flex-end; }
         
-        /* RE-ENGINEERED WRAPPING */
         #history { 
             font-size: 36px; 
             color: #fff; 
@@ -34,17 +33,13 @@
             letter-spacing: -1px; 
             margin-bottom: 5px;
             white-space: normal;
-            word-break: keep-all; /* Do not break words/numbers */
+            word-break: keep-all; 
             overflow-wrap: break-word;
             line-height: 1.2;
             display: block;
         }
 
-        /* Logic to keep numbers together */
-        .num-block {
-            display: inline-block;
-            white-space: nowrap;
-        }
+        .num-block { display: inline-block; white-space: nowrap; }
 
         #display { font-size: var(--base-font-size); font-weight: 300; color: var(--result-color); line-height: 1.2; transition: all 0.2s; }
         
@@ -69,16 +64,32 @@
             z-index: 100;
         }
 
-        #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 1000; padding: 40px 20px; text-align: left; }
+        #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 1000; padding: 40px 20px; text-align: left; overflow-y: auto; }
         #settings input { width: 100%; padding: 15px; margin: 10px 0 20px; border-radius: 8px; border: none; font-size: 16px; background: #2c2c2e; color: white; }
-        .save-btn { background: #2e7d32; color: white; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; border: none; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2e7d32; }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .save-btn { background: #2e7d32; color: white; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; border: none; margin-top: 20px; }
     </style>
 </head>
 <body id="body">
     <div id="magic-indicator"></div>
 
     <div id="settings">
-        <h2>Settings</h2>
+        <h2 style="color:#fff">Settings</h2>
+        
+        <div class="setting-row">
+            <span>Magic Active (Master Switch)</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="masterToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
         <label>Force Number</label>
         <input type="number" id="forceNumInput">
         <label>Send Nth Number to Cloud</label>
@@ -132,24 +143,18 @@
         let holdTimer, equalHoldTimer;
         let lastTappedOp = "";
         let isFaceDown = false;
+        let masterActive = false;
 
         const config = JSON.parse(localStorage.getItem('calc_settings')) || { theme: 'ios', forceNum: "0", cloudIndex: 2, scriptUrl: '' };
         const display = document.getElementById('display');
         const historyDisplay = document.getElementById('history');
         const indicator = document.getElementById('magic-indicator');
 
-        function subtleVibrate() {
-            if (navigator.vibrate) navigator.vibrate(15);
-        }
+        function subtleVibrate() { if (navigator.vibrate) navigator.vibrate(15); }
+        function activationPulse() { if (navigator.vibrate) navigator.vibrate([20, 40, 20]); }
 
-        function activationPulse() {
-            if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
-        }
-
-        // FORCE VIBRATION ON START
         window.addEventListener('pointerdown', function triggerVib(e) {
             subtleVibrate();
-            // Do not remove this listener; it handles all "Instant" vibrations
             if (magicMode && e.target.tagName !== 'BUTTON') {
                 e.preventDefault();
                 if (magicIndex < magicDigits.length) {
@@ -161,15 +166,10 @@
             }
         }, true);
 
-        // Block clicks in Magic Mode
-        window.addEventListener('click', (e) => {
-            if (magicMode) {
-                e.stopImmediatePropagation();
-                e.preventDefault();
-            }
-        }, true);
+        window.addEventListener('click', (e) => { if (magicMode) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 
         function triggerMagic() {
+            if (!masterActive) return; // Cannot trigger if toggle is off
             if (!magicMode) {
                 startMagicSetup();
                 if (magicDigits.length > 0) {
@@ -190,12 +190,27 @@
             const target = parseFloat(config.forceNum);
             if (val !== '=') { display.style.color = "var(--result-color)"; display.style.fontSize = "var(--base-font-size)"; }
             
-            if (val === 'AC') { currentInput = ""; equationArr = []; magicMode = false; lastTappedOp = ""; indicator.style.display = 'none'; }
-            else if (val === 'back') { currentInput = currentInput.slice(0, -1); }
+            if (val === 'AC') { 
+                currentInput = ""; equationArr = []; magicMode = false; lastTappedOp = ""; indicator.style.display = 'none'; 
+            }
+            else if (val === 'back') { 
+                if (currentInput !== "") {
+                    currentInput = currentInput.slice(0, -1);
+                } else if (equationArr.length > 0) {
+                    equationArr.pop(); // Remove operator or previous number
+                }
+            }
             else if (val === '=') {
                 sendToCloud();
                 let isMagicActive = (magicIndex > 0 || indicator.style.display === 'block');
                 let finalVal = isMagicActive ? config.forceNum : getRunningTotal();
+                
+                // AUTO-RESET MASTER TOGGLE ONCE FORCE NUMBER IS SHOWN
+                if (isMagicActive) {
+                    masterActive = false;
+                    document.getElementById('masterToggle').checked = false;
+                }
+
                 historyDisplay.innerText = "";
                 display.innerText = finalVal;
                 display.style.color = "#ffffff"; 
@@ -208,7 +223,7 @@
                 indicator.style.display = 'none';
                 return;
             } else if (['+', '-', '*', '/'].includes(val)) {
-                if ((val === '+' && target > currentTotal) || (val === '-' && target < currentTotal)) { startMagicSetup(); }
+                if (masterActive && ((val === '+' && target > currentTotal) || (val === '-' && target < currentTotal))) { startMagicSetup(); }
                 if (currentInput !== "") equationArr.push(currentInput);
                 let visualOp = val==='*'?'×':val==='/'?'÷':val==='-'?'−':'+';
                 equationArr.push(visualOp);
@@ -228,26 +243,18 @@
         }
 
         function updateUI() {
-            // Updated UI logic to wrap numbers in blocks
             let htmlContent = "";
             let tempNum = "";
-
             const processPart = (char) => {
                 if (['+','−','×','÷'].includes(char)) {
                     if (tempNum) htmlContent += `<span class="num-block">${tempNum}</span>`;
                     htmlContent += char;
                     tempNum = "";
-                } else {
-                    tempNum += char;
-                }
+                } else { tempNum += char; }
             };
-
-            equationArr.forEach(part => {
-                for(let char of part) processPart(char);
-            });
+            equationArr.forEach(part => { for(let char of part) processPart(char); });
             for(let char of currentInput) processPart(char);
             if (tempNum) htmlContent += `<span class="num-block">${tempNum}</span>`;
-
             historyDisplay.innerHTML = htmlContent;
             if (display.style.color !== "rgb(255, 255, 255)") { display.innerText = getRunningTotal(); }
         }
@@ -262,15 +269,18 @@
         window.addEventListener('deviceorientation', (e) => {
             if (Math.abs(e.beta) > 160 && !isFaceDown) {
                 isFaceDown = true;
-                if (magicDigits.length > 0 && !magicMode) { triggerMagic(); }
+                if (masterActive && magicDigits.length > 0 && !magicMode) { triggerMagic(); }
             } else if (Math.abs(e.beta) < 100) { isFaceDown = false; }
         });
 
         let themeClicks = 0, percentClicks = 0;
         document.getElementById('themeBtn').onclick = () => { themeClicks++; if(themeClicks === 2) { config.theme = config.theme==='ios'?'android':'ios'; applyTheme(); saveSettings(); } setTimeout(()=>themeClicks=0, 400); };
         document.getElementById('percentBtn').onclick = () => { percentClicks++; if(percentClicks === 2) document.getElementById('settings').style.display='block'; setTimeout(()=>percentClicks=0, 400); };
+        
         function applyTheme() { document.body.className = config.theme === 'android' ? 'android-theme' : ''; }
+        
         function saveSettings() {
+            masterActive = document.getElementById('masterToggle').checked;
             config.forceNum = document.getElementById('forceNumInput').value || "0";
             config.cloudIndex = document.getElementById('cloudIndexInput').value || 2;
             config.scriptUrl = document.getElementById('scriptUrlInput').value || '';
@@ -278,19 +288,20 @@
             document.getElementById('settings').style.display = 'none';
             applyTheme();
         }
+
         async function sendToCloud() {
             if (!config.scriptUrl) return;
             let parts = [...equationArr, currentInput].filter(x => !['+','−','×','÷'].includes(x) && x !== "");
             if (parts[config.cloudIndex - 1]) fetch(config.scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ value: parts[config.cloudIndex - 1] }) });
         }
+
         applyTheme();
         document.getElementById('forceNumInput').value = config.forceNum;
         document.getElementById('cloudIndexInput').value = config.cloudIndex;
         document.getElementById('scriptUrlInput').value = config.scriptUrl;
+        document.getElementById('masterToggle').checked = masterActive;
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     </script>
 </body>
 </html>
