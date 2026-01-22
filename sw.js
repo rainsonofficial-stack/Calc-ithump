@@ -1,4 +1,4 @@
-const cacheName = 'magic-calc-v9';
+const cacheName = 'magic-calc-v10';
 const assets = [
   './',
   './index.html',
