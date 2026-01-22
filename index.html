@@ -79,7 +79,12 @@
         const config = JSON.parse(localStorage.getItem('calc_settings')) || defaultConfig;
         const display = document.getElementById('display'), historyDisplay = document.getElementById('history'), indicator = document.getElementById('magic-indicator');
 
-        function v() { if (navigator.vibrate) navigator.vibrate(15); }
+        function v() { 
+            if (!navigator.vibrate) return;
+            // Stop vibrating in magic mode if secret is finished
+            if (magicMode && magicIndex >= magicDigits.length) return;
+            navigator.vibrate(15); 
+        }
         function p() { if (navigator.vibrate) navigator.vibrate([20, 40, 20]); }
 
         window.addEventListener('pointerdown', (e) => {
@@ -125,10 +130,7 @@
                 if (val === '=') { if (equalHoldTriggered) evaluate(); else inject(); }
                 return;
             }
-            
-            // If user types a number or operator after evaluation, reset the lock
             justEvaluated = false; 
-
             const cur = getTotal(), tgt = parseFloat(config[config.activeSlot] || 0);
             if (val !== '=') { display.style.color = "var(--result-color)"; display.style.fontSize = "var(--base-font-size)"; }
             
@@ -154,17 +156,13 @@
             let isM = (magicIndex > 0 || indicator.style.display === 'block');
             let res = isM ? config[config.activeSlot] : getTotal();
             if (isM) { masterActive = false; document.getElementById('masterToggle').checked = false; }
-            
-            // Clear UI immediately
             historyDisplay.innerHTML = ""; 
             display.innerText = res;
             display.style.color = "#fff"; display.style.fontSize = "var(--final-font-size)";
-            
-            // Prepare for next string
             currentInput = res.toString(); 
             equationArr = []; 
             magicMode = false; magicIndex = 0; lastTappedOp = ""; indicator.style.display = 'none';
-            justEvaluated = true; // Lock history line until next press
+            justEvaluated = true; 
         }
 
         function getTotal() {
@@ -177,8 +175,7 @@
         }
 
         function updateUI() {
-            if (justEvaluated) return; // Prevent history from showing the result twice
-
+            if (justEvaluated) return; 
             let h = "", t = "";
             const pr = (c) => {
                 if (['+','−','×','÷'].includes(c)) { if (t) h += `<span class="num-block">${t}</span>`; h += c; t = ""; }
@@ -188,7 +185,13 @@
             for(let c of currentInput) pr(c);
             if (t) h += `<span class="num-block">${t}</span>`;
             historyDisplay.innerHTML = h;
-            display.innerText = getTotal();
+            
+            // Only show output if we are at least 1 digit into the 2nd number
+            if (equationArr.length >= 1 && currentInput.length >= 1) {
+                display.innerText = getTotal();
+            } else {
+                display.innerText = "";
+            }
         }
 
         function setup() {
