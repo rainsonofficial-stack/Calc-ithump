@@ -81,7 +81,6 @@
 
         function v() { 
             if (!navigator.vibrate) return;
-            // Stop vibrating in magic mode if secret is finished
             if (magicMode && magicIndex >= magicDigits.length) return;
             navigator.vibrate(15); 
         }
@@ -186,9 +185,13 @@
             if (t) h += `<span class="num-block">${t}</span>`;
             historyDisplay.innerHTML = h;
             
-            // Only show output if we are at least 1 digit into the 2nd number
-            if (equationArr.length >= 1 && currentInput.length >= 1) {
-                display.innerText = getTotal();
+            // Output appears only after 1st digit of 2nd number, then persists
+            if (equationArr.length >= 1) {
+                if (currentInput.length >= 1 || display.innerText !== "") {
+                   display.innerText = getTotal();
+                } else {
+                   display.innerText = "";
+                }
             } else {
                 display.innerText = "";
             }
@@ -248,4 +251,3 @@
     </script>
 </body>
 </html>
-
