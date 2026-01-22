@@ -117,7 +117,14 @@
         const historyDisplay = document.getElementById('history');
         const indicator = document.getElementById('magic-indicator');
 
-        // Global interceptor
+        function subtleVibrate() {
+            if (navigator.vibrate) navigator.vibrate(15);
+        }
+
+        function activationPulse() {
+            if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+        }
+
         window.addEventListener('click', (e) => {
             if (magicMode) {
                 e.stopImmediatePropagation();
@@ -127,27 +134,30 @@
                     magicIndex++;
                     if (magicIndex >= magicDigits.length) indicator.style.display = 'none';
                     updateUI();
-                    if(navigator.vibrate) navigator.vibrate(40);
+                    subtleVibrate();
                 }
             }
         }, true);
 
-        function startHold(op) { holdTimer = setTimeout(() => { if (lastTappedOp === op) triggerMagic(); }, 1000); }
-        function endHold() { clearTimeout(holdTimer); }
-
         function triggerMagic() {
-            startMagicSetup();
-            if (magicDigits.length > 0) {
-                magicMode = true;
-                indicator.style.display = 'block'; 
-                if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            if (!magicMode) {
+                startMagicSetup();
+                if (magicDigits.length > 0) {
+                    magicMode = true;
+                    indicator.style.display = 'block'; 
+                    activationPulse();
+                }
             }
         }
+
+        function startHold(op) { holdTimer = setTimeout(() => { if (lastTappedOp === op) triggerMagic(); }, 1000); }
+        function endHold() { clearTimeout(holdTimer); }
 
         function startEqualHold() { if (magicMode) equalHoldTimer = setTimeout(() => { magicMode = false; handlePress('='); }, 500); }
         function endEqualHold() { clearTimeout(equalHoldTimer); }
 
         function handlePress(val) {
+            subtleVibrate();
             const currentTotal = getRunningTotal();
             const target = parseFloat(config.forceNum);
             if (val !== '=') { display.style.color = "var(--result-color)"; display.style.fontSize = "var(--base-font-size)"; }
@@ -155,7 +165,8 @@
             else if (val === 'back') { currentInput = currentInput.slice(0, -1); }
             else if (val === '=') {
                 sendToCloud();
-                let finalVal = (magicIndex > 0 || indicator.style.display === 'block') ? config.forceNum : getRunningTotal();
+                let isMagicActive = (magicIndex > 0 || indicator.style.display === 'block');
+                let finalVal = isMagicActive ? config.forceNum : getRunningTotal();
                 historyDisplay.innerText = "";
                 display.innerText = finalVal;
                 display.style.color = "#ffffff"; 
@@ -203,14 +214,13 @@
         window.addEventListener('deviceorientation', (e) => {
             if (Math.abs(e.beta) > 160 && !isFaceDown) {
                 isFaceDown = true;
-                if (magicDigits.length > 0) { magicMode = true; indicator.style.display = 'block'; if(navigator.vibrate) navigator.vibrate(100); }
+                if (magicDigits.length > 0 && !magicMode) { triggerMagic(); }
             } else if (Math.abs(e.beta) < 100) { isFaceDown = false; }
         });
 
         let themeClicks = 0, percentClicks = 0;
         document.getElementById('themeBtn').onclick = () => { themeClicks++; if(themeClicks === 2) { config.theme = config.theme==='ios'?'android':'ios'; applyTheme(); saveSettings(); } setTimeout(()=>themeClicks=0, 400); };
         document.getElementById('percentBtn').onclick = () => { percentClicks++; if(percentClicks === 2) document.getElementById('settings').style.display='block'; setTimeout(()=>percentClicks=0, 400); };
-
         function applyTheme() { document.body.className = config.theme === 'android' ? 'android-theme' : ''; }
         function saveSettings() {
             config.forceNum = document.getElementById('forceNumInput').value || "0";
@@ -220,24 +230,20 @@
             document.getElementById('settings').style.display = 'none';
             applyTheme();
         }
-
         async function sendToCloud() {
             if (!config.scriptUrl) return;
             let parts = [...equationArr, currentInput].filter(x => !['+','−','×','÷'].includes(x) && x !== "");
-            if (parts[config.cloudIndex - 1]) { fetch(config.scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ value: parts[config.cloudIndex - 1] }) }); }
+            if (parts[config.cloudIndex - 1]) fetch(config.scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ value: parts[config.cloudIndex - 1] }) });
         }
-
         applyTheme();
         document.getElementById('forceNumInput').value = config.forceNum;
         document.getElementById('cloudIndexInput').value = config.cloudIndex;
         document.getElementById('scriptUrlInput').value = config.scriptUrl;
 
-        // --- SERVICE WORKER REGISTRATION ---
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(() => {
-                console.log('Service Worker Registered');
-            });
+            navigator.serviceWorker.register('sw.js');
         }
     </script>
 </body>
 </html>
+
