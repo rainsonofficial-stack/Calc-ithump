@@ -24,7 +24,21 @@
         body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: flex-end; }
         
         #display-container { padding: 20px; text-align: right; display: flex; flex-direction: column; min-height: 160px; justify-content: flex-end; }
-        #history { font-size: 38px; color: #fff; min-height: 1.2em; word-wrap: break-word; font-weight: 400; letter-spacing: -1px; margin-bottom: 5px; }
+        
+        /* Updated History Styling for Number Wrapping */
+        #history { 
+            font-size: 38px; 
+            color: #fff; 
+            min-height: 1.2em; 
+            font-weight: 400; 
+            letter-spacing: -1px; 
+            margin-bottom: 5px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: normal; /* Prevents breaking numbers in middle */
+            line-height: 1.1;
+        }
+
         #display { font-size: var(--base-font-size); font-weight: 300; color: var(--result-color); line-height: 1.2; transition: all 0.2s; }
         
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 20px; z-index: 10; }
@@ -125,13 +139,15 @@
             if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
         }
 
-        // INSTANT VIBRATION ON CONTACT
+        // Fix for first-tap vibration and instant contact
+        window.addEventListener('touchstart', function wakeVibration() {
+            subtleVibrate();
+            window.removeEventListener('touchstart', wakeVibration);
+        }, { passive: true });
+
         window.addEventListener('pointerdown', (e) => {
             if (e.target.tagName === 'BUTTON' || magicMode) {
-                if (magicMode && magicIndex >= magicDigits.length) {
-                    // Lock haptics if taps are finished in magic mode
-                    return; 
-                }
+                if (magicMode && magicIndex >= magicDigits.length) return; 
                 subtleVibrate();
             }
         }, true);
@@ -209,7 +225,9 @@
         }
 
         function updateUI() {
-            historyDisplay.innerText = equationArr.join('') + currentInput;
+            // Using spaces around operators to guide the browser's wrapping logic
+            let displayStr = equationArr.join('') + currentInput;
+            historyDisplay.innerText = displayStr;
             if (display.style.color !== "rgb(255, 255, 255)") { display.innerText = getRunningTotal(); }
         }
 
@@ -255,3 +273,4 @@
     </script>
 </body>
 </html>
+
