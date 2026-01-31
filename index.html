@@ -9,20 +9,19 @@
             --bg-color: #000;
             --text-color: #fff;
             --btn-number: #171719;
-            --btn-operator: #171719;
+            --btn-operator: #919191;
             --btn-func: #2d2d2f;
             --accent-green: #2bd45e;
             --icon-gray: #777;
         }
 
-        /* iOS Dark Theme: Only Equal is Orange */
         body.ios-theme {
             --bg-color: #000;
             --text-color: #fff;
             --btn-number: #333333;
             --btn-operator: #333333;
             --btn-func: #a5a5a5;
-            --accent-green: #ff9f0a; /* Equal becomes Orange */
+            --accent-green: #ff9f0a;
             --icon-gray: #8e8e93;
         }
 
@@ -31,37 +30,34 @@
 
         #magic-dot { position: fixed; bottom: 15px; left: 15px; width: 6px; height: 6px; background: #333; border-radius: 50%; display: none; z-index: 3000; }
 
-        #display-container { padding: 0 30px; text-align: right; display: flex; flex-direction: column; height: 32%; justify-content: flex-end; margin-bottom: 20px; }
+        #display-container { padding: 0 25px; text-align: right; display: flex; flex-direction: column; height: 32%; justify-content: flex-end; margin-bottom: 10px; margin-top: 75px; }
         
-        /* Requirement 4: Prevent number breaking */
-        #history { font-size: 52px; min-height: 1.2em; white-space: nowrap; overflow: hidden; line-height: 1.1; transition: font-size 0.05s; }
+        /* Requirement: Smart wrapping (no digit breaks) */
+        #history { font-size: 52px; min-height: 1.2em; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.1; transition: font-size 0.05s; display: block; }
         #display { font-size: 28px; color: #888; margin-top: 8px; height: 1.2em; }
 
-        /* Requirement 3: Alignment Fix */
-        .icon-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 25px 15px 25px; }
+        /* Alignment Fix: Full width bar for backspace */
+        .icon-bar { display: flex; align-items: center; padding: 0 25px 15px 25px; position: relative; }
         .icon-group { display: flex; gap: 35px; align-items: center; }
         .icon-group svg { width: 22px; height: 22px; fill: var(--icon-gray); }
         
-        /* Requirement 5: Scientific SVG Color Fixed */
         .scientific-svg { stroke: var(--icon-gray) !important; color: var(--icon-gray) !important; }
 
-        /* Requirement 2: Backspace with X */
-        .back-btn { background: none; border: none; padding: 0; outline: none; cursor: pointer; display: flex; align-items: center; margin-left: auto; }
-        .back-btn svg { width: 32px; height: 32px; fill: none; stroke: var(--accent-green); stroke-width: 1.5; }
+        /* Backspace pinned to far right margin */
+        .back-btn { background: none; border: none; padding: 0; outline: none; cursor: pointer; position: absolute; right: 25px; display: flex; align-items: center; }
+        .back-btn svg { width: 28px; height: 28px; fill: none; stroke: var(--accent-green); stroke-width: 1.8; }
 
         .divider { height: 1px; background-color: #333; margin: 0 20px 15px 20px; opacity: 0.3; }
 
-        /* Requirement 1: 78px buttons, tight grid */
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 15px 25px 15px; margin-top: auto; }
-        button { border: none; border-radius: 50%; height: 78px; width: 78px; font-size: 30px; cursor: pointer; color: var(--text-color); display: flex; align-items: center; justify-content: center; margin: auto; transition: background 0.1s; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 15px 25px 15px; margin-top: auto; }
+        button { border: none; border-radius: 50%; height: 78px; width: 78px; font-size: 30px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; margin: auto; }
         button:active { filter: brightness(1.3); }
 
         .btn-num { background: var(--btn-number); }
-        .btn-op { background: var(--btn-operator); color: var(--accent-green); font-size: 36px; }
+        .btn-op { background: var(--btn-operator); color: #000; font-size: 36px; }
         .btn-fn { background: var(--btn-func); }
         .btn-eq { background: var(--accent-green) !important; color: #fff; }
 
-        /* Reverted Text Styles */
         .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: #444; transition: .4s; border-radius: 34px; }
@@ -111,10 +107,15 @@
         <div class="icon-group">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.1.8-1.2-4.5-2.7V7z"/></svg>
             <svg viewBox="0 0 24 24"><path d="M21 8H3c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zm0 6H3v-4h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v4z"/></svg>
-            <svg viewBox="0 0 24 24" class="scientific-svg" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12h8m-4-4v8"/></svg>
+            <svg viewBox="0 0 24 24" class="scientific-svg" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="4"/>
+                <line x1="8" y1="12" x2="16" y2="12" stroke-width="2"/>
+                <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none"/>
+            </svg>
         </div>
         <button class="back-btn" onclick="handlePress('back')">
-            <svg viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/><path d="M16 9l-4 6M12 9l4 6" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
     </div>
     <div class="divider"></div>
@@ -167,12 +168,17 @@
             return parts.join('.');
         }
 
+        // Logic for smart wrapping (Requirement: break only at operators)
+        function wrapText(str) {
+            // Inserts a zero-width space after operators to suggest break points to the browser
+            return str.replace(/([+−×÷])/g, '$1\u200B');
+        }
+
         function adjustFont() {
             const len = histDiv.innerText.length;
-            // More aggressive scaling to prevent line breaks
-            if (len > 25) histDiv.style.fontSize = "18px";
-            else if (len > 18) histDiv.style.fontSize = "26px";
-            else if (len > 12) histDiv.style.fontSize = "38px";
+            if (len > 35) histDiv.style.fontSize = "18px";
+            else if (len > 25) histDiv.style.fontSize = "26px";
+            else if (len > 15) histDiv.style.fontSize = "38px";
             else histDiv.style.fontSize = "52px";
         }
 
@@ -237,7 +243,7 @@
             equationArr.forEach(p => { if(['+','−','×','÷'].includes(p)) pr(p); else p.split('').forEach(pr); });
             currentInput.split('').forEach(pr);
             if (t) h += formatNum(t);
-            histDiv.innerHTML = h || "0";
+            histDiv.innerHTML = wrapText(h) || "0";
             dispDiv.innerText = equationArr.length >= 1 ? formatNum(getTotal()) : "";
             adjustFont();
         }
