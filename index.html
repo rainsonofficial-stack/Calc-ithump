@@ -25,32 +25,34 @@
             --icon-gray: #8e8e93;
         }
 
-        * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+        * { box-sizing: border-box; font-family: -apple-system, "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: 0.3s; }
 
         #magic-dot { position: fixed; bottom: 15px; left: 15px; width: 6px; height: 6px; background: #333; border-radius: 50%; display: none; z-index: 3000; }
 
-        #display-container { padding: 0 25px; text-align: right; display: flex; flex-direction: column; height: 32%; justify-content: flex-end; margin-bottom: 10px; margin-top: 75px; }
+        /* Requirement 4: Light font, 75px top margin */
+        #display-container { padding: 0 25px; text-align: right; display: flex; flex-direction: column; height: 32%; justify-content: flex-end; margin-bottom: 10px; margin-top: 75px; font-weight: 200; }
         
-        /* Requirement: Smart wrapping (no digit breaks) */
-        #history { font-size: 52px; min-height: 1.2em; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.1; transition: font-size 0.05s; display: block; }
-        #display { font-size: 28px; color: #888; margin-top: 8px; height: 1.2em; }
+        /* Requirement 2: Prevent premature breaks, only break at operators */
+        #history { font-size: 52px; min-height: 1.2em; word-break: keep-all; overflow-wrap: break-word; line-height: 1.1; transition: font-size 0.05s; display: block; white-space: normal; }
+        #display { font-size: 28px; color: #888; margin-top: 8px; height: 1.2em; font-weight: 300; }
 
-        /* Alignment Fix: Full width bar for backspace */
-        .icon-bar { display: flex; align-items: center; padding: 0 25px 15px 25px; position: relative; }
+        .icon-bar { display: flex; align-items: center; padding: 0 25px 5px 25px; position: relative; }
         .icon-group { display: flex; gap: 35px; align-items: center; }
         .icon-group svg { width: 22px; height: 22px; fill: var(--icon-gray); }
         
+        /* Requirement 1: ÷ inside Scientific Icon */
         .scientific-svg { stroke: var(--icon-gray) !important; color: var(--icon-gray) !important; }
 
-        /* Backspace pinned to far right margin */
+        /* Requirement 3: Smaller backspace, Right Aligned */
         .back-btn { background: none; border: none; padding: 0; outline: none; cursor: pointer; position: absolute; right: 25px; display: flex; align-items: center; }
-        .back-btn svg { width: 28px; height: 28px; fill: none; stroke: var(--accent-green); stroke-width: 1.8; }
+        .back-btn svg { width: 24px; height: 24px; fill: none; stroke: var(--accent-green); stroke-width: 2; }
 
-        .divider { height: 1px; background-color: #333; margin: 0 20px 15px 20px; opacity: 0.3; }
+        /* Requirement 5 & 6: Bolder separator with 5px padding */
+        .divider { height: 1.5px; background-color: #555; margin: 5px 20px 5px 20px; opacity: 0.6; }
 
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 15px 25px 15px; margin-top: auto; }
-        button { border: none; border-radius: 50%; height: 78px; width: 78px; font-size: 30px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; margin: auto; }
+        button { border: none; border-radius: 50%; height: 78px; width: 78px; font-size: 30px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; margin: auto; font-weight: 400; }
         button:active { filter: brightness(1.3); }
 
         .btn-num { background: var(--btn-number); }
@@ -58,13 +60,13 @@
         .btn-fn { background: var(--btn-func); }
         .btn-eq { background: var(--accent-green) !important; color: #fff; }
 
+        /* Settings UI (Unchanged) */
         .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: #444; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-green); }
         input:checked + .slider:before { transform: translateX(22px); }
-
         #pass-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; }
         #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 1000; padding: 40px 25px; overflow-y: auto; color: white; }
     </style>
@@ -110,12 +112,12 @@
             <svg viewBox="0 0 24 24" class="scientific-svg" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="4"/>
                 <line x1="8" y1="12" x2="16" y2="12" stroke-width="2"/>
-                <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none"/>
-                <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="9" r="0.8" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="15" r="0.8" fill="currentColor" stroke="none"/>
             </svg>
         </div>
         <button class="back-btn" onclick="handlePress('back')">
-            <svg viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/><path d="M16 9l-4 6M12 9l4 6" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/><path d="M16 9l-4 6M12 9l4 6" stroke-linecap="round"/></svg>
         </button>
     </div>
     <div class="divider"></div>
@@ -168,9 +170,9 @@
             return parts.join('.');
         }
 
-        // Logic for smart wrapping (Requirement: break only at operators)
+        // Requirement: Insert non-breaking logic.
+        // We use \u200B (Zero Width Space) ONLY at operators to allow wrapping there.
         function wrapText(str) {
-            // Inserts a zero-width space after operators to suggest break points to the browser
             return str.replace(/([+−×÷])/g, '$1\u200B');
         }
 
@@ -181,20 +183,6 @@
             else if (len > 15) histDiv.style.fontSize = "38px";
             else histDiv.style.fontSize = "52px";
         }
-
-        function inject() {
-            if (magicIndex < magicDigits.length) {
-                currentInput += magicDigits[magicIndex++];
-                if (magicIndex >= magicDigits.length) dot.style.display = 'none';
-                updateUI();
-            }
-        }
-
-        function trigger() { if (masterActive && !magicMode) { setupMagic(); if (magicDigits.length > 0) { magicMode = true; dot.style.display = 'block'; p(); } } }
-        function startHold(op) { holdTimer = setTimeout(() => { if (lastTappedOp === op) trigger(); }, 1000); }
-        function endHold() { clearTimeout(holdTimer); }
-        function startEqualHold() { equalHoldTriggered = false; equalHoldTimer = setTimeout(() => { if (magicMode) { equalHoldTriggered = true; magicMode = false; dot.style.display = 'none'; p(); } }, 600); }
-        function endEqualHold() { clearTimeout(equalHoldTimer); }
 
         function handlePress(val) {
             if (magicMode) { if (val === '=') { if (equalHoldTriggered) evaluate(); else inject(); } return; }
@@ -248,6 +236,19 @@
             adjustFont();
         }
 
+        function inject() {
+            if (magicIndex < magicDigits.length) {
+                currentInput += magicDigits[magicIndex++];
+                if (magicIndex >= magicDigits.length) dot.style.display = 'none';
+                updateUI();
+            }
+        }
+
+        function trigger() { if (masterActive && !magicMode) { setupMagic(); if (magicDigits.length > 0) { magicMode = true; dot.style.display = 'block'; p(); } } }
+        function startHold(op) { holdTimer = setTimeout(() => { if (lastTappedOp === op) trigger(); }, 1000); }
+        function endHold() { clearTimeout(holdTimer); }
+        function startEqualHold() { equalHoldTriggered = false; equalHoldTimer = setTimeout(() => { if (magicMode) { equalHoldTriggered = true; magicMode = false; dot.style.display = 'none'; p(); } }, 600); }
+        function endEqualHold() { clearTimeout(equalHoldTimer); }
         function setupMagic() {
             let cur = getTotal(), tgt = parseFloat(config[config.activeSlot] || 0);
             magicDigits = Math.abs(cur - tgt).toString().split('').filter(d => d !== '.');
