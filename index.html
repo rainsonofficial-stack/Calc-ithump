@@ -30,7 +30,6 @@
 
         #magic-dot { position: fixed; bottom: 15px; left: 15px; width: 6px; height: 6px; background: #333; border-radius: 50%; display: none; z-index: 3000; }
 
-        /* Requirement: Top align + 75px margin */
         #display-container { 
             padding: 0 25px; 
             text-align: right; 
@@ -41,15 +40,15 @@
             margin-top: 75px; 
         }
         
-        /* Requirement: Input remains top, Result below */
         #history { 
             font-size: 52px; 
             font-weight: 200;
             min-height: 1.2em; 
             line-height: 1.1; 
-            word-break: break-all;
             white-space: pre-wrap;
             width: 100%;
+            overflow-wrap: normal;
+            word-break: normal; /* Prevents numbers from breaking */
         }
         
         #display { 
@@ -69,7 +68,6 @@
         .back-btn { background: none; border: none; padding: 0; outline: none; cursor: pointer; position: absolute; right: 25px; display: flex; align-items: center; }
         .back-btn svg { width: 22px; height: 22px; fill: none; stroke: var(--accent-green); stroke-width: 2.5; }
 
-        /* Separator Spacing */
         .divider { height: 1.5px; background-color: #555; margin: 15px 20px 20px 20px; opacity: 0.6; }
 
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 15px 25px 15px; margin-top: auto; }
@@ -81,10 +79,8 @@
         .btn-fn { background: var(--btn-func); }
         .btn-eq { background: var(--accent-green) !important; color: #fff; }
 
-        /* Restored Settings UI */
         #pass-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; }
         #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 1000; padding: 40px 25px; overflow-y: auto; color: white; }
-        .set-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
     </style>
 </head>
 <body>
@@ -98,7 +94,7 @@
     
     <div id="settings">
         <h2 style="margin-top:0; font-weight:normal;">Settings</h2>
-        <div class="set-row">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <span>Magic Active</span>
             <input type="checkbox" id="masterToggle" style="width:20px; height:20px;">
         </div>
@@ -172,6 +168,16 @@
         function v() { if (navigator.vibrate) navigator.vibrate(12); }
         function p() { if (navigator.vibrate) navigator.vibrate([25, 40, 25]); }
 
+        // Fix 2: Restore Magic Touch Registration
+        window.addEventListener('pointerdown', (e) => {
+            if (magicMode) {
+                v();
+                if (e.target.closest('#equalBtn')) return;
+                e.preventDefault(); e.stopPropagation();
+                inject();
+            } else if (e.target.tagName === 'BUTTON') v();
+        }, true);
+
         function formatNum(n) {
             if (!n || n === "-") return n;
             let parts = n.toString().split('.');
@@ -179,27 +185,47 @@
             return parts.join('.');
         }
 
-        function processWrap(text) {
+        // Fix 3: Smart 25-char wrap. Numbers never break.
+        function processWrap(htmlContent) {
+            // We strip HTML tags to count actual characters
+            let tempDiv = document.createElement("div");
+            tempDiv.innerHTML = htmlContent;
+            let plainText = tempDiv.innerText;
+            
             let result = "";
             let currentLineLength = 0;
-            const chars = text.split('');
             const ops = ['+','−','×','÷'];
             
-            for (let i = 0; i < chars.length; i++) {
-                let char = chars[i];
-                let isOp = ops.includes(char);
-                if (currentLineLength >= 25 || (isOp && currentLineLength > 20)) {
-                    result += "\n";
-                    currentLineLength = 0;
+            // Split by operators but keep the operators in the array
+            const segments = htmlContent.split(/([+−×÷])/);
+            
+            segments.forEach(seg => {
+                if (ops.includes(seg)) {
+                    // Rule 1: Green Operators
+                    let coloredOp = `<span style="color:var(--accent-green); margin:0 4px;">${seg}</span>`;
+                    
+                    // Rule: Break if adding this op exceeds 25
+                    if (currentLineLength + 1 > 25) {
+                        result += "<br>";
+                        currentLineLength = 0;
+                    }
+                    result += coloredOp;
+                    currentLineLength++;
+                } else {
+                    // Segment is a number or empty string
+                    let cleanNum = seg.replace(/<[^>]*>/g, ""); 
+                    if (currentLineLength + cleanNum.length > 25 && currentLineLength > 0) {
+                        result += "<br>";
+                        currentLineLength = 0;
+                    }
+                    result += seg;
+                    currentLineLength += cleanNum.length;
                 }
-                result += char;
-                currentLineLength++;
-            }
+            });
             return result;
         }
 
         function adjustFont() {
-            // Force fixed large font for first 25 chars to prevent "jumping"
             const raw = histDiv.innerText.replace(/\n/g, '');
             if (raw.length > 50) histDiv.style.fontSize = "22px";
             else if (raw.length > 25) histDiv.style.fontSize = "32px";
@@ -212,7 +238,7 @@
             const pr = (c) => {
                 if (['+','−','×','÷'].includes(c)) {
                     if (temp) h += formatNum(temp);
-                    h += c;
+                    h += c; // Logic moved to processWrap for coloring
                     temp = "";
                 } else temp += c;
             };
@@ -220,7 +246,8 @@
             currentInput.split('').forEach(pr);
             if (temp) h += formatNum(temp);
             
-            histDiv.innerText = processWrap(h) || "0";
+            // Fix 1 & 3: Colors and Wrap applied here
+            histDiv.innerHTML = processWrap(h) || "0";
             dispDiv.innerText = equationArr.length >= 1 ? formatNum(getTotal()) : "";
             adjustFont();
         }
@@ -276,15 +303,10 @@
         }
 
         window.addEventListener('deviceorientation', (e) => { if (Math.abs(e.beta) > 160 && masterActive) { setupMagic(); magicMode = true; dot.style.display = 'block'; p(); } });
-        
         document.getElementById('themeBtn').onclick = () => { if(++themeClicks === 2) { config.theme = config.theme === 'dark' ? 'ios' : 'dark'; document.body.className = config.theme === 'ios' ? 'ios-theme' : ''; saveToLocal(); } setTimeout(()=>themeClicks=0, 400); };
-        
         document.getElementById('percentBtn').onclick = () => { if(++percentClicks === 2) { document.getElementById('pass-overlay').style.display='flex'; document.getElementById('passInput').focus(); } setTimeout(()=>percentClicks=0, 400); };
-        
         document.getElementById('passInput').addEventListener('input', (e) => { if (e.target.value === "0702") { document.getElementById('pass-overlay').style.display = 'none'; document.getElementById('settings').style.display = 'block'; e.target.value=""; } });
-
         function saveToLocal() { localStorage.setItem('calc_settings', JSON.stringify(config)); }
-
         function saveSettings() { 
             masterActive = document.getElementById('masterToggle').checked; 
             config.activeSlot = document.getElementById('activeSlot').value;
@@ -293,7 +315,6 @@
             document.getElementById('settings').style.display = 'none'; 
         }
         
-        // Initial setup
         document.body.className = config.theme === 'ios' ? 'ios-theme' : '';
         document.getElementById('masterToggle').checked = masterActive;
         document.getElementById('activeSlot').value = config.activeSlot;
