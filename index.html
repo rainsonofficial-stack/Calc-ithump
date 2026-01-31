@@ -30,12 +30,21 @@
 
         #magic-dot { position: fixed; bottom: 15px; left: 15px; width: 6px; height: 6px; background: #333; border-radius: 50%; display: none; z-index: 3000; }
 
-        /* Requirement 1: Top Aligned, 75px Margin */
-        #display-container { padding: 0 25px; text-align: right; display: flex; flex-direction: column; height: 35%; justify-content: flex-start; margin-top: 75px; font-weight: 200; }
+        /* Fix 1: Top align + 75px margin */
+        #display-container { 
+            padding: 0 25px; 
+            text-align: right; 
+            display: flex; 
+            flex-direction: column; 
+            height: 35%; 
+            justify-content: flex-start; 
+            margin-top: 75px; 
+        }
         
-        /* Requirement 4 & 5: Fixed wrap at 25 chars, operators on next line */
+        /* Fix 4: Break at 25 logic */
         #history { 
             font-size: 52px; 
+            font-weight: 200;
             min-height: 1.2em; 
             line-height: 1.1; 
             display: block; 
@@ -43,7 +52,9 @@
             white-space: pre-wrap;
             width: 100%;
         }
-        #display { font-size: 28px; color: #888; margin-bottom: 15px; order: -1; font-weight: 300; }
+        
+        /* Fix 1: Result is above history, light font */
+        #display { font-size: 28px; color: #888; margin-bottom: 10px; order: -1; font-weight: 300; }
 
         .icon-bar { display: flex; align-items: center; padding: 0 25px 5px 25px; position: relative; }
         .icon-group { display: flex; gap: 35px; align-items: center; }
@@ -52,9 +63,9 @@
         .scientific-svg { stroke: var(--icon-gray) !important; color: var(--icon-gray) !important; }
 
         .back-btn { background: none; border: none; padding: 0; outline: none; cursor: pointer; position: absolute; right: 25px; display: flex; align-items: center; }
-        .back-btn svg { width: 24px; height: 24px; fill: none; stroke: var(--accent-green); stroke-width: 2; }
+        .back-btn svg { width: 22px; height: 22px; fill: none; stroke: var(--accent-green); stroke-width: 2.5; }
 
-        /* Requirement 3: 20px space below separator */
+        /* Fix 3: Symmetrical Spacing (15px top, 20px bottom) */
         .divider { height: 1.5px; background-color: #555; margin: 15px 20px 20px 20px; opacity: 0.6; }
 
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 15px 25px 15px; margin-top: auto; }
@@ -62,11 +73,11 @@
         button:active { filter: brightness(1.3); }
 
         .btn-num { background: var(--btn-number); }
+        /* Fix: Operator buttons color restored */
         .btn-op { background: var(--btn-operator); color: #000; font-size: 36px; }
         .btn-fn { background: var(--btn-func); }
         .btn-eq { background: var(--accent-green) !important; color: #fff; }
 
-        /* Settings Overlays */
         #pass-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; }
         #settings { display: none; position: fixed; inset: 0; background: #1c1c1e; z-index: 1000; padding: 40px 25px; overflow-y: auto; color: white; }
     </style>
@@ -87,13 +98,13 @@
             <input type="checkbox" id="masterToggle">
         </div>
         <div id="slot-inputs">
-            <input type="number" id="f1" placeholder="Slot 1">
-            <input type="number" id="f2" placeholder="Slot 2">
-            <input type="number" id="f3" placeholder="Slot 3">
-            <input type="number" id="f4" placeholder="Slot 4">
-            <input type="number" id="f5" placeholder="Slot 5">
+            <input type="number" id="f1" placeholder="Slot 1" style="width:100%; padding:10px; margin:5px 0;">
+            <input type="number" id="f2" placeholder="Slot 2" style="width:100%; padding:10px; margin:5px 0;">
+            <input type="number" id="f3" placeholder="Slot 3" style="width:100%; padding:10px; margin:5px 0;">
+            <input type="number" id="f4" placeholder="Slot 4" style="width:100%; padding:10px; margin:5px 0;">
+            <input type="number" id="f5" placeholder="Slot 5" style="width:100%; padding:10px; margin:5px 0;">
         </div>
-        <button onclick="saveSettings()">Save</button>
+        <button onclick="saveSettings()" style="width:100%; padding:15px; margin-top:20px; background:var(--accent-green); border:none; color:white;">Save</button>
     </div>
 
     <div id="display-container">
@@ -107,9 +118,9 @@
             <svg viewBox="0 0 24 24"><path d="M21 8H3c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zm0 6H3v-4h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v4z"/></svg>
             <svg viewBox="0 0 24 24" class="scientific-svg" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="4"/>
-                <line x1="8" y1="12" x2="16" y2="12" stroke="#000" stroke-width="2.2"/>
-                <circle cx="12" cy="8.5" r="1.2" fill="#000" stroke="none"/>
-                <circle cx="12" cy="15.5" r="1.2" fill="#000" stroke="none"/>
+                <line x1="8" y1="12" x2="16" y2="12" stroke="#000" stroke-width="2.5"/>
+                <circle cx="12" cy="8.2" r="1.2" fill="#000" stroke="none"/>
+                <circle cx="12" cy="15.8" r="1.2" fill="#000" stroke="none"/>
             </svg>
         </div>
         <button class="back-btn" onclick="handlePress('back')">
@@ -159,22 +170,29 @@
             return parts.join('.');
         }
 
-        // Requirement 4 & 5: Break at 25 chars, operators lead the next line
+        // Fix 4 & 5: Wrap logic
         function processWrap(text) {
             let result = "";
             let currentLineLength = 0;
             const chars = text.split('');
+            const ops = ['+','−','×','÷'];
             
             for (let i = 0; i < chars.length; i++) {
                 let char = chars[i];
-                let isOp = ['+','−','×','÷'].includes(char);
+                let isOp = ops.includes(char);
                 
-                // If adding this char exceeds 25, or if it's an operator and we're near the end
-                if (currentLineLength >= 25 || (isOp && currentLineLength > 20)) {
+                // If adding this char exceeds 25
+                if (currentLineLength >= 25) {
                     result += "\n";
                     currentLineLength = 0;
                 }
                 
+                // Rule 5: If it's an operator and near the edge, force it to next line
+                if (isOp && currentLineLength > 20) {
+                    result += "\n";
+                    currentLineLength = 0;
+                }
+
                 result += char;
                 currentLineLength++;
             }
@@ -182,7 +200,7 @@
         }
 
         function adjustFont() {
-            const raw = histDiv.innerText;
+            const raw = histDiv.innerText.replace(/\n/g, '');
             if (raw.length > 50) histDiv.style.fontSize = "22px";
             else if (raw.length > 25) histDiv.style.fontSize = "32px";
             else histDiv.style.fontSize = "52px";
@@ -190,8 +208,7 @@
 
         function updateUI() {
             if (justEvaluated) return;
-            let h = "";
-            let temp = "";
+            let h = "", temp = "";
             const pr = (c) => {
                 if (['+','−','×','÷'].includes(c)) {
                     if (temp) h += formatNum(temp);
@@ -203,7 +220,6 @@
             currentInput.split('').forEach(pr);
             if (temp) h += formatNum(temp);
             
-            // Format for display with our custom wrap logic
             histDiv.innerText = processWrap(h) || "0";
             dispDiv.innerText = equationArr.length >= 1 ? formatNum(getTotal()) : "";
             adjustFont();
@@ -230,6 +246,7 @@
             dispDiv.innerText = "";
             currentInput = res.toString(); equationArr = []; magicMode = false; dot.style.display = 'none';
             justEvaluated = true;
+            adjustFont();
         }
 
         function getTotal() {
@@ -260,9 +277,18 @@
         window.addEventListener('deviceorientation', (e) => { if (Math.abs(e.beta) > 160 && masterActive) { setupMagic(); magicMode = true; dot.style.display = 'block'; p(); } });
         document.getElementById('themeBtn').onclick = () => { if(++themeClicks === 2) { document.body.classList.toggle('ios-theme'); } setTimeout(()=>themeClicks=0, 400); };
         document.getElementById('percentBtn').onclick = () => { if(++percentClicks === 2) { document.getElementById('pass-overlay').style.display='flex'; } setTimeout(()=>percentClicks=0, 400); };
-        document.getElementById('passInput').addEventListener('input', (e) => { if (e.target.value === "0702") { document.getElementById('pass-overlay').style.display = 'none'; document.getElementById('settings').style.display = 'block'; } });
-        function saveSettings() { masterActive = document.getElementById('masterToggle').checked; document.getElementById('settings').style.display = 'none'; }
+        document.getElementById('passInput').addEventListener('input', (e) => { if (e.target.value === "0702") { document.getElementById('pass-overlay').style.display = 'none'; document.getElementById('settings').style.display = 'block'; e.target.value=""; } });
+        function saveSettings() { 
+            masterActive = document.getElementById('masterToggle').checked; 
+            config.f1 = document.getElementById('f1').value || "0";
+            localStorage.setItem('calc_settings', JSON.stringify(config));
+            document.getElementById('settings').style.display = 'none'; 
+        }
+        
+        // Initial setup
+        document.getElementById('masterToggle').checked = masterActive;
+        document.getElementById('f1').value = config.f1;
+        updateUI();
     </script>
 </body>
 </html>
-
