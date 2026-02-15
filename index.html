@@ -46,21 +46,20 @@
             text-align: right;
             width: 100%;
             font-size: var(--base-font-size);
-            min-height: 1.1em; /* Ensures layout stability even when empty */
+            min-height: 1.1em;
         }
 
         .term { display: inline-block; }
         .op-green { color: var(--green); margin: 0 2px; font-family: inherit; }
 
-        /* --- NEW CURSOR STYLES --- */
         .cursor {
             display: inline-block;
             width: 2px;
-            height: 1.2em; /* Vertically longer than font */
+            height: 1.2em; 
             background-color: var(--green);
             margin-left: 3px;
-            vertical-align: middle; /* Align center */
-            margin-top: -0.1em; /* Minor visual centering adjustment */
+            vertical-align: middle; 
+            margin-top: -0.1em; 
             animation: blink 1s step-end infinite;
         }
 
@@ -90,16 +89,19 @@
         
         .tool-icons-left {
             display: flex;
-            gap: 30px; 
+            /* CHANGE 2: Increased Gap by 10% (30px -> 33px) */
+            gap: 33px; 
             padding-left: 15px; 
         }
         
         .tool-icon svg {
-            width: 22px;
-            height: 22px;
+            /* CHANGE 1: Increased Size by 10% (22px -> 25px) */
+            width: 25px;
+            height: 25px;
             fill: none;
             stroke: var(--icon-grey);
-            stroke-width: 2;
+            /* CHANGE 1: Thinner Stroke (2 -> 1.5) */
+            stroke-width: 1.5; 
             stroke-linecap: round;
             stroke-linejoin: round;
         }
@@ -209,8 +211,15 @@
             </div>
             <div class="tool-icon">
                  <svg viewBox="0 0 24 24" style="stroke: var(--icon-grey);">
-                     <rect x="3" y="3" width="18" height="18" rx="5" ry="5" fill="none" stroke-width="2"/>
-                     <path d="M8 12h8M12 8v8" stroke-width="2" stroke-linecap="round"/>
+                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke-width="1.5"/>
+                     
+                     <text x="5.5" y="10.5" font-family="sans-serif" font-size="8" fill="var(--icon-grey)" stroke="none" style="font-weight:bold;">&radic;</text>
+                     
+                     <text x="13.5" y="10.5" font-family="sans-serif" font-size="8" fill="var(--icon-grey)" stroke="none">&pi;</text>
+
+                     <text x="6" y="18.5" font-family="serif" font-style="italic" font-size="8" fill="var(--icon-grey)" stroke="none">e</text>
+                     
+                     <text x="13.5" y="18.5" font-family="sans-serif" font-size="8" fill="var(--icon-grey)" stroke="none">=</text>
                  </svg>
             </div>
         </div>
@@ -383,7 +392,6 @@
             let res = isM ? config[config.activeSlot] : getTotal();
             if (isM) { masterActive = false; document.getElementById('masterToggle').checked = false; }
             
-            // --- UPDATE: Append cursor to final result ---
             inputDisplay.innerHTML = formatNum(res) + '<span class="cursor"></span>';
             inputDisplay.style.color = "var(--green)";
             
@@ -443,14 +451,12 @@
                 }
             }
 
-            // --- UPDATE: Blank on empty & Add Cursor if content exists ---
             if (renderHtml) {
                 inputDisplay.innerHTML = renderHtml + '<span class="cursor"></span>';
             } else {
-                inputDisplay.innerHTML = ""; // Displays blank instead of 0
+                inputDisplay.innerHTML = ""; 
             }
             
-            // --- FONT REDUCTION LOGIC ---
             let newSize = 40;
             
             if (charCount > 11) {
