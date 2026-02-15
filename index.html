@@ -11,16 +11,16 @@
             --bg-color: #000;
             --text-color: #fff;
             --btn-num: #171719;
-            --btn-op: #919191; /* Light grey background */
-            --btn-top: #2d2d2f; /* Darker grey for C, (), % */
-            --green: #21A613;
-            --icon-grey: #6b6b6b; /* Lighter grey for tools */
-            --preview-grey: #888888;
+            --btn-op: #919191; 
+            --btn-top: #2d2d2f; 
+            /* SINGLE GREEN SOURCE OF TRUTH */
+            --green: #2bb11b; 
+            --icon-grey: #6b6b6b;
+            --preview-grey: #797979;
             --base-font-size: 55px; 
-            --min-font-size: 34px;
         }
 
-        body.android-theme { --green: #21A613; }
+        body.android-theme { --green: #2bb11b; }
 
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: flex-end; }
@@ -32,13 +32,12 @@
             display: flex; 
             flex-direction: column; 
             flex-grow: 1;
-            justify-content: flex-start; /* Top Alignment */
+            justify-content: flex-start; /* Keeps content top-aligned initially */
             padding-top: 75px; 
-            overflow-y: hidden; /* Hide scrollbar, let content wrap */
-            margin-bottom: 10px;
+            overflow-y: hidden;
+            margin-bottom: 0;
         }
         
-        /* Main Input Equation */
         #input-display {
             font-weight: 300; 
             color: var(--text-color); 
@@ -51,19 +50,17 @@
             font-size: var(--base-font-size);
         }
 
-        /* Grouping for wrapping logic */
+        /* Logic to keep Operator+Number together */
         .term {
-            display: inline-block; /* Keeps Operator+Number together */
+            display: inline-block; 
         }
 
-        /* Green Operator Color */
         .op-green { 
             color: var(--green); 
             margin: 0 2px;
             font-family: inherit;
         }
 
-        /* Live Result Preview */
         #preview-display {
             min-height: 1.2em;
             margin-top: 20px;
@@ -74,32 +71,31 @@
             padding-right: 2px;
         }
 
-        /* --- TOOL ICONS ROW --- */
+        /* --- ICONS ROW --- */
         .tools-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            /* Matches grid padding (15px) */
-            padding: 0 15px 10px 15px; 
-            height: 50px;
+            padding: 0 20px 5px 20px; /* Reduced bottom padding */
+            height: 45px;
+            margin-bottom: 5px;
         }
         
         .tool-icons-left {
             display: flex;
             gap: 25px;
-            padding-left: 10px;
+            padding-left: 5px;
         }
         
         .tool-icon svg {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             fill: none;
             stroke: var(--icon-grey);
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-        /* Specific adjustments for filled icons vs stroked */
         .icon-fill svg { fill: var(--icon-grey); stroke: none; }
 
         .backspace-btn {
@@ -110,23 +106,25 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Width matches the operator button column width roughly */
-            width: 75px; 
+            width: 60px; /* Slightly smaller container */
+            height: 40px;
         }
         
         .backspace-btn svg {
-            width: 32px; /* Smaller, as requested */
-            height: 24px;
+            width: 28px; /* Smaller icon size */
+            height: 22px;
             fill: none;
-            stroke: var(--green); /* Green Outline */
-            stroke-width: 1.5;
+            stroke: var(--green); /* Matches Equal Button */
+            stroke-width: 1.5; 
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         /* Separator Line */
         .separator {
             height: 1px;
             background-color: #333;
-            margin: 0 15px 15px 15px;
+            margin: 0 15px 10px 15px; /* Reduced bottom margin */
             opacity: 0.5;
         }
 
@@ -137,13 +135,14 @@
             gap: 12px; 
             padding: 15px; 
             z-index: 10; 
-            padding-bottom: 30px;
+            /* Reduced bottom padding to align interface lower */
+            padding-bottom: 15px; 
         }
         
         button { 
             border: none; 
             border-radius: 50%; 
-            /* Dynamic height based on screen width */
+            /* Dynamic height */
             height: calc((100vw - 30px - 36px) / 4); 
             width: 100%;
             font-size: 32px; 
@@ -159,13 +158,10 @@
         button:active { filter: brightness(1.3); }
         
         .btn-top { background: var(--btn-top); color: #fff; font-size: 28px; }
-        
-        /* Operators: Black Text */
         .btn-op { background: var(--btn-op); color: #000; font-size: 38px; font-weight: 400; }
-        
         .btn-equal { background: var(--green); color: #fff; font-size: 38px; }
         
-        /* --- MODALS & SETTINGS (Logic Preserved) --- */
+        /* Overlays (No Changes) */
         #magic-indicator { position: fixed; bottom: 15px; left: 15px; width: 8px; height: 8px; background: rgba(128, 128, 128, 0.3); border-radius: 50%; display: none; z-index: 100; }
         #pass-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
         .pass-card { background: #1c1c1e; padding: 25px; border-radius: 20px; width: 280px; text-align: center; color: white; border: 0.5px solid #333; }
@@ -213,13 +209,15 @@
                  <svg viewBox="0 0 24 24" style="stroke: var(--icon-grey);">
                      <rect x="3" y="3" width="18" height="18" rx="5" ry="5" fill="none" stroke-width="2"/>
                      <path d="M8 12h8M12 8v8" stroke-width="2" stroke-linecap="round"/>
-                     <text x="15" y="19" font-size="0" fill="currentColor"></text> 
                  </svg>
             </div>
         </div>
+        
         <button class="backspace-btn" onclick="handlePress('back')">
             <svg viewBox="0 0 24 24">
-                <path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z" stroke-width="1.5"/>
+                <path d="M20 4H9.5a2 2 0 0 0-1.5.7L2.5 11a1.5 1.5 0 0 0 0 2l5.5 6.3a2 2 0 0 0 1.5.7H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                <line x1="10" y1="9" x2="16" y2="15" />
+                <line x1="16" y1="9" x2="10" y2="15" />
             </svg>
         </button>
     </div>
@@ -275,7 +273,6 @@
             if (magicMode) {
                 v();
                 if (e.target.id === 'equalBtn') return;
-                // Allow backspace to work even in magic mode 
                 if (e.target.closest('.backspace-btn')) return; 
                 e.preventDefault(); e.stopPropagation();
                 inject();
@@ -346,13 +343,11 @@
             else if (val === 'back') { 
                 if (currentInput !== "") currentInput = currentInput.slice(0, -1); 
                 else if (equationArr.length > 0) {
-                    equationArr.pop(); // Remove op
-                    if(equationArr.length > 0) currentInput = equationArr.pop(); // Pop previous number back to edit
+                    equationArr.pop(); 
+                    if(equationArr.length > 0) currentInput = equationArr.pop();
                 }
             }
-            else if (val === 'paren') { 
-                // Aesthetic only, per request
-            }
+            else if (val === 'paren') { }
             else if (val === '=') { evaluate(); return; } 
             else if (['+', '-', '*', '/'].includes(val)) {
                 let op = val==='*'?'×':val==='/'?'÷':val==='-'?'−':'+';
@@ -374,7 +369,7 @@
             if (isM) { masterActive = false; document.getElementById('masterToggle').checked = false; }
             
             inputDisplay.innerHTML = formatNum(res);
-            inputDisplay.style.color = "var(--green)"; // Final Result Green
+            inputDisplay.style.color = "var(--green)";
             previewDisplay.innerText = "";
             
             currentInput = res.toString(); 
@@ -397,69 +392,57 @@
         function updateUI() {
             if (justEvaluated) return; 
             
-            // --- 1. Construct HTML for Wrapping ---
             let combined = [...equationArr];
             if (currentInput !== "") combined.push(currentInput);
 
             let renderHtml = "";
-            let charCount = 0; // Count chars for sizing
+            let charCount = 0; 
 
             for (let i = 0; i < combined.length; i++) {
                 let val = combined[i];
                 let isOp = ['+','−','×','÷'].includes(val);
                 let displayVal = isOp ? val : formatNum(val);
                 
-                // Count plain characters (no commas)
                 charCount += val.length; 
 
                 if (i === 0 && !isOp) {
-                     // First number (loose)
                      renderHtml += `<span>${displayVal}</span>`;
                 } else if (isOp) {
-                    // Logic: Group [Op + Number] together
                     let nextNum = (i + 1 < combined.length) ? combined[i+1] : "";
                     let nextIsOp = ['+','−','×','÷'].includes(nextNum);
                     
                     if (!nextIsOp) {
-                        // Standard Case: Op + Number
                         let nextValFormatted = formatNum(nextNum);
                         renderHtml += `<span class="term"><span class="op-green">${val}</span>${nextValFormatted}</span>`;
                         charCount += nextNum.length;
-                        i++; // Skip next num in loop
+                        i++; 
                     } else {
-                        // Edge Case: Op followed by Op (typing)
                         renderHtml += `<span class="op-green">${val}</span>`;
                     }
                 } else {
-                    // Fallback
                     renderHtml += `<span>${displayVal}</span>`;
                 }
             }
 
             inputDisplay.innerHTML = renderHtml || "0";
             
-            // --- 2. Dynamic Font Sizing ---
-            // 0-12 chars: 55px (Base)
-            // 13-25 chars: Linear reduction
-            // >25 chars: Cap at 34px (Min)
+            // --- UPDATED FONT SIZING LOGIC ---
+            // Start shrinking at 11th character.
+            // Aggressive shrink to ensure 25 characters fit on one line (dropping to ~24px).
+            // Formula: Base 55px. If > 11 chars, reduce by 2.3px per extra char.
             
             let newSize = 55;
             
-            if (charCount > 12) {
-                // Calculate reduction
-                // We have a buffer of 13 characters (25-12) to drop ~21px (55-34)
-                // Step size approx 1.7px per char
-                let reduction = (charCount - 12) * 1.7;
+            if (charCount > 11) {
+                // Calculation: (25 - 11) * 2.3 approx 32px reduction. 55 - 32 = 23px.
+                let reduction = (charCount - 11) * 2.3;
                 newSize = 55 - reduction;
                 
-                if (newSize < 34) newSize = 34; // Min Cap
+                if (newSize < 24) newSize = 24; // Min size floor
             }
             inputDisplay.style.fontSize = newSize + "px";
 
-            // --- 3. Preview Logic ---
             let showPreview = false;
-            // Show if we have at least 2 items (Num, Op) AND currentInput is started
-            // OR if we have 3 items (Num, Op, Num...)
             if (equationArr.length >= 2 && currentInput !== "") showPreview = true;
             if (equationArr.length >= 3) showPreview = true;
 
@@ -477,8 +460,6 @@
         }
 
         window.addEventListener('deviceorientation', (e) => {
-            // Trigger Check: Only if last input was an operator
-            // (meaning currentInput is empty, but we have an equation started)
             let isLastOp = (currentInput === "" && equationArr.length > 0);
             
             if (Math.abs(e.beta) > 160 && !isFaceDown) { 
