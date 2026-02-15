@@ -46,10 +46,28 @@
             text-align: right;
             width: 100%;
             font-size: var(--base-font-size);
+            min-height: 1.1em; /* Ensures layout stability even when empty */
         }
 
         .term { display: inline-block; }
         .op-green { color: var(--green); margin: 0 2px; font-family: inherit; }
+
+        /* --- NEW CURSOR STYLES --- */
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em; /* Vertically longer than font */
+            background-color: var(--green);
+            margin-left: 3px;
+            vertical-align: middle; /* Align center */
+            margin-top: -0.1em; /* Minor visual centering adjustment */
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
 
         #preview-display {
             min-height: 1.2em;
@@ -365,10 +383,10 @@
             let res = isM ? config[config.activeSlot] : getTotal();
             if (isM) { masterActive = false; document.getElementById('masterToggle').checked = false; }
             
-            inputDisplay.innerHTML = formatNum(res);
+            // --- UPDATE: Append cursor to final result ---
+            inputDisplay.innerHTML = formatNum(res) + '<span class="cursor"></span>';
             inputDisplay.style.color = "var(--green)";
             
-            // --- FIX: Reset to base size for final result ---
             inputDisplay.style.fontSize = "var(--base-font-size)";
             
             previewDisplay.innerText = "";
@@ -425,10 +443,14 @@
                 }
             }
 
-            inputDisplay.innerHTML = renderHtml || "0";
+            // --- UPDATE: Blank on empty & Add Cursor if content exists ---
+            if (renderHtml) {
+                inputDisplay.innerHTML = renderHtml + '<span class="cursor"></span>';
+            } else {
+                inputDisplay.innerHTML = ""; // Displays blank instead of 0
+            }
             
             // --- FONT REDUCTION LOGIC ---
-            // Base size: 40px
             let newSize = 40;
             
             if (charCount > 11) {
