@@ -14,10 +14,8 @@
             --btn-op: #919191; 
             --btn-top: #2d2d2f; 
             --green: #2bb11b; 
-            /* Lighter Grey */
             --icon-grey: #a6a6a6; 
             --preview-grey: #a6a6a6;
-            /* CHANGE 1: Reduced starting font size */
             --base-font-size: 40px; 
         }
 
@@ -26,7 +24,6 @@
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: flex-end; }
         
-        /* --- DISPLAY AREA --- */
         #display-container { 
             padding: 0 25px; 
             text-align: right; 
@@ -51,20 +48,12 @@
             font-size: var(--base-font-size);
         }
 
-        .term {
-            display: inline-block; 
-        }
-
-        .op-green { 
-            color: var(--green); 
-            margin: 0 2px;
-            font-family: inherit;
-        }
+        .term { display: inline-block; }
+        .op-green { color: var(--green); margin: 0 2px; font-family: inherit; }
 
         #preview-display {
             min-height: 1.2em;
             margin-top: 20px;
-            /* CHANGE 2: Set strictly smaller than min-font-size of input */
             font-size: 22px;
             color: var(--preview-grey);
             font-weight: 400;
@@ -72,7 +61,6 @@
             padding-right: 2px;
         }
 
-        /* --- ICONS ROW --- */
         .tools-row {
             display: flex;
             justify-content: space-between;
@@ -84,7 +72,6 @@
         
         .tool-icons-left {
             display: flex;
-            /* Increased Gap by 20% and added Left Padding */
             gap: 30px; 
             padding-left: 15px; 
         }
@@ -122,7 +109,6 @@
             stroke-linejoin: round;
         }
 
-        /* Separator Line */
         .separator {
             height: 1px;
             background-color: #333;
@@ -130,7 +116,6 @@
             opacity: 0.5;
         }
 
-        /* --- BUTTON GRID --- */
         .grid { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
@@ -161,7 +146,6 @@
         .btn-op { background: var(--btn-op); color: #000; font-size: 38px; font-weight: 400; }
         .btn-equal { background: var(--green); color: #fff; font-size: 38px; }
         
-        /* Overlays */
         #magic-indicator { position: fixed; bottom: 15px; left: 15px; width: 8px; height: 8px; background: rgba(128, 128, 128, 0.3); border-radius: 50%; display: none; z-index: 100; }
         #pass-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
         .pass-card { background: #1c1c1e; padding: 25px; border-radius: 20px; width: 280px; text-align: center; color: white; border: 0.5px solid #333; }
@@ -299,7 +283,6 @@
 
         function startHold(op) { 
             holdTimer = setTimeout(() => { 
-                // Logic: Trigger if the *previous* press was ANY operator (lastTappedOp is not empty)
                 if (lastTappedOp !== "") trigger(); 
             }, 1000); 
         }
@@ -338,7 +321,7 @@
                     justEvaluated = false;
                     inputDisplay.style.color = "var(--text-color)";
                     previewDisplay.innerText = "";
-                    lastTappedOp = ""; // Reset op state
+                    lastTappedOp = ""; 
                 }
             }
             
@@ -356,7 +339,7 @@
             else if (val === 'paren') { }
             else if (val === '=') { 
                 evaluate(); 
-                lastTappedOp = ""; // Reset op state after eval
+                lastTappedOp = ""; 
                 return; 
             } 
             else if (['+', '-', '*', '/'].includes(val)) {
@@ -368,10 +351,10 @@
                     equationArr.push(op);
                 }
                 currentInput = ""; 
-                lastTappedOp = val; // Set active op
+                lastTappedOp = val; 
             } else {
                 currentInput += val;
-                lastTappedOp = ""; // Clear active op since we are typing numbers
+                lastTappedOp = ""; 
             }
             updateUI();
         }
@@ -384,6 +367,10 @@
             
             inputDisplay.innerHTML = formatNum(res);
             inputDisplay.style.color = "var(--green)";
+            
+            // --- FIX: Reset to base size for final result ---
+            inputDisplay.style.fontSize = "var(--base-font-size)";
+            
             previewDisplay.innerText = "";
             
             currentInput = res.toString(); 
@@ -440,20 +427,13 @@
 
             inputDisplay.innerHTML = renderHtml || "0";
             
-            // --- FONT REDUCTION LOGIC (UPDATED) ---
-            // More aggressive reduction to prevent early wrapping.
-            // Factor 2.9 (instead of 2.3) drops the size faster per char.
-            
+            // --- FONT REDUCTION LOGIC ---
+            // Base size: 40px
             let newSize = 40;
             
             if (charCount > 11) {
-                // (25 - 11) * 2.9 = ~40.6px reduction.
-                // 55 - 40.6 = ~14.4px. 
-                // Min capped at 24px. 
-                // This ensures it hits the minimum size well before the 25th character.
                 let reduction = (charCount - 11) * 2.9;
                 newSize = 40 - reduction;
-                
                 if (newSize < 24) newSize = 24; 
             }
             inputDisplay.style.fontSize = newSize + "px";
