@@ -1,9 +1,10 @@
-const cacheName = 'magic-calc-v14';
+const cacheName = 'magic-calc-v15';
 const assets = [
   './',
   './index.html',
   './manifest.json',
-  'https://cdn-icons-png.flaticon.com/512/6511/6511306.png'
+  'Calc-512.jpg',
+  'Calc-192.jpg'
 ];
 
 // Install the service worker and cache everything
