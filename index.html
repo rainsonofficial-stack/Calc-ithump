@@ -444,7 +444,7 @@
             // More aggressive reduction to prevent early wrapping.
             // Factor 2.9 (instead of 2.3) drops the size faster per char.
             
-            let newSize = 55;
+            let newSize = 40;
             
             if (charCount > 11) {
                 // (25 - 11) * 2.9 = ~40.6px reduction.
@@ -452,7 +452,7 @@
                 // Min capped at 24px. 
                 // This ensures it hits the minimum size well before the 25th character.
                 let reduction = (charCount - 11) * 2.9;
-                newSize = 55 - reduction;
+                newSize = 40 - reduction;
                 
                 if (newSize < 24) newSize = 24; 
             }
