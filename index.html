@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculator</title>
+    <title>Samsung Calculator</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <style>
@@ -11,82 +11,115 @@
             --bg-color: #000;
             --text-color: #fff;
             --btn-num: #171719;
-            --btn-op: #919191;
-            --btn-top: #2d2d2f;
+            --btn-op: #919191; /* Light grey background */
+            --btn-top: #2d2d2f; /* Darker grey for C, (), % */
             --green: #21A613;
-            --result-color: #fff;
-            --base-font-size: 40px;
-            --final-font-size: 55px; 
+            --icon-grey: #6b6b6b; /* Lighter grey for tools */
+            --preview-grey: #888888;
+            --base-font-size: 55px; 
+            --min-font-size: 34px;
         }
-        body.android-theme { --green: #21A613; } /* Maintaining theme structure just in case */
+
+        body.android-theme { --green: #21A613; }
+
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: flex-end; }
         
-        /* Display Area */
+        /* --- DISPLAY AREA --- */
         #display-container { 
-            padding: 20px 30px; 
+            padding: 0 25px; 
             text-align: right; 
             display: flex; 
             flex-direction: column; 
             flex-grow: 1;
-            justify-content: flex-start; /* Top align */
-            padding-top: 75px; /* Margin from top */
+            justify-content: flex-start; /* Top Alignment */
+            padding-top: 75px; 
+            overflow-y: hidden; /* Hide scrollbar, let content wrap */
+            margin-bottom: 10px;
         }
         
-        #history { 
-            font-size: 30px; 
-            color: #fff; 
-            min-height: 1.2em; 
-            font-weight: 400; 
-            margin-bottom: 5px; 
-            white-space: normal; 
-            word-break: keep-all; 
-            overflow-wrap: break-word; 
-            line-height: 1.2; 
-            display: block; 
-        }
-        
-        .op-green { color: var(--green); margin: 0 4px; }
-        
-        #display { 
-            font-size: var(--base-font-size); 
+        /* Main Input Equation */
+        #input-display {
             font-weight: 300; 
             color: var(--text-color); 
-            line-height: 1.2; 
-            transition: all 0.2s; 
-            margin-top: 10px;
+            line-height: 1.1; 
+            transition: font-size 0.1s ease-out;
+            word-wrap: break-word;
+            word-break: break-word;
+            text-align: right;
+            width: 100%;
+            font-size: var(--base-font-size);
         }
 
-        /* Tool Icons Row */
+        /* Grouping for wrapping logic */
+        .term {
+            display: inline-block; /* Keeps Operator+Number together */
+        }
+
+        /* Green Operator Color */
+        .op-green { 
+            color: var(--green); 
+            margin: 0 2px;
+            font-family: inherit;
+        }
+
+        /* Live Result Preview */
+        #preview-display {
+            min-height: 1.2em;
+            margin-top: 20px;
+            font-size: 35px;
+            color: var(--preview-grey);
+            font-weight: 400;
+            text-align: right;
+            padding-right: 2px;
+        }
+
+        /* --- TOOL ICONS ROW --- */
         .tools-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 25px 10px 25px;
+            /* Matches grid padding (15px) */
+            padding: 0 15px 10px 15px; 
             height: 50px;
         }
+        
         .tool-icons-left {
             display: flex;
             gap: 25px;
-            color: #494949;
+            padding-left: 10px;
         }
+        
         .tool-icon svg {
             width: 24px;
             height: 24px;
-            fill: #494949;
+            fill: none;
+            stroke: var(--icon-grey);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
+        /* Specific adjustments for filled icons vs stroked */
+        .icon-fill svg { fill: var(--icon-grey); stroke: none; }
+
         .backspace-btn {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 5px;
+            padding: 0;
             display: flex;
             align-items: center;
+            justify-content: center;
+            /* Width matches the operator button column width roughly */
+            width: 75px; 
         }
+        
         .backspace-btn svg {
-            width: 28px;
-            height: 28px;
-            fill: var(--green);
+            width: 32px; /* Smaller, as requested */
+            height: 24px;
+            fill: none;
+            stroke: var(--green); /* Green Outline */
+            stroke-width: 1.5;
         }
 
         /* Separator Line */
@@ -97,11 +130,11 @@
             opacity: 0.5;
         }
 
-        /* Grid */
+        /* --- BUTTON GRID --- */
         .grid { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
-            gap: 10px; 
+            gap: 12px; 
             padding: 15px; 
             z-index: 10; 
             padding-bottom: 30px;
@@ -110,7 +143,8 @@
         button { 
             border: none; 
             border-radius: 50%; 
-            height: calc((100vw - 30px - 40px) / 4); /* Dynamic size */
+            /* Dynamic height based on screen width */
+            height: calc((100vw - 30px - 36px) / 4); 
             width: 100%;
             font-size: 32px; 
             cursor: pointer; 
@@ -125,10 +159,13 @@
         button:active { filter: brightness(1.3); }
         
         .btn-top { background: var(--btn-top); color: #fff; font-size: 28px; }
-        .btn-op { background: var(--btn-op); color: #fff; font-size: 36px; font-weight: 300; }
-        .btn-equal { background: var(--green); color: #fff; font-size: 36px; }
         
-        /* Overlays */
+        /* Operators: Black Text */
+        .btn-op { background: var(--btn-op); color: #000; font-size: 38px; font-weight: 400; }
+        
+        .btn-equal { background: var(--green); color: #fff; font-size: 38px; }
+        
+        /* --- MODALS & SETTINGS (Logic Preserved) --- */
         #magic-indicator { position: fixed; bottom: 15px; left: 15px; width: 8px; height: 8px; background: rgba(128, 128, 128, 0.3); border-radius: 50%; display: none; z-index: 100; }
         #pass-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
         .pass-card { background: #1c1c1e; padding: 25px; border-radius: 20px; width: 280px; text-align: center; color: white; border: 0.5px solid #333; }
@@ -160,24 +197,30 @@
     </div>
 
     <div id="display-container">
-        <div id="history"></div>
-        <div id="display"></div>
+        <div id="input-display"></div>
+        <div id="preview-display"></div>
     </div>
 
     <div class="tools-row">
         <div class="tool-icons-left">
-            <div class="tool-icon">
+            <div class="tool-icon icon-fill">
                 <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
             </div>
-            <div class="tool-icon">
+            <div class="tool-icon icon-fill">
                 <svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 10H3V8h2v4h2V8h2v4h2V8h2v4h2V8h2v4h2V8h2v8z"/></svg>
             </div>
             <div class="tool-icon">
-                 <svg viewBox="0 0 24 24"><path d="M7 2h10v2H7zM6 6h2v2H6zm0 4h2v2H6zm0 4h2v2H6zm6-8h2v2h-2zm0 4h2v2h-2zm0 4h2v2h-2zm6-8h2v2h-2zm0 4h2v2h-2zm0 4h2v2h-2zM4 20h16v2H4z"/></svg>
+                 <svg viewBox="0 0 24 24" style="stroke: var(--icon-grey);">
+                     <rect x="3" y="3" width="18" height="18" rx="5" ry="5" fill="none" stroke-width="2"/>
+                     <path d="M8 12h8M12 8v8" stroke-width="2" stroke-linecap="round"/>
+                     <text x="15" y="19" font-size="0" fill="currentColor"></text> 
+                 </svg>
             </div>
         </div>
         <button class="backspace-btn" onclick="handlePress('back')">
-            <svg viewBox="0 0 24 24"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"/></svg>
+            <svg viewBox="0 0 24 24">
+                <path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z" stroke-width="1.5"/>
+            </svg>
         </button>
     </div>
 
@@ -217,7 +260,9 @@
 
         const defaultConfig = { theme:'ios', activeSlot:'f1', f1:"0", f2:"0", f3:"0", f4:"0", f5:"0", cloudIndex:2, scriptUrl:'' };
         const config = JSON.parse(localStorage.getItem('calc_settings')) || defaultConfig;
-        const display = document.getElementById('display'), historyDisplay = document.getElementById('history'), indicator = document.getElementById('magic-indicator');
+        const inputDisplay = document.getElementById('input-display');
+        const previewDisplay = document.getElementById('preview-display');
+        const indicator = document.getElementById('magic-indicator');
 
         function v() { 
             if (!navigator.vibrate) return;
@@ -230,7 +275,7 @@
             if (magicMode) {
                 v();
                 if (e.target.id === 'equalBtn') return;
-                // Allow backspace to work even in magic mode for correction
+                // Allow backspace to work even in magic mode 
                 if (e.target.closest('.backspace-btn')) return; 
                 e.preventDefault(); e.stopPropagation();
                 inject();
@@ -267,8 +312,7 @@
         function endEqualHold() { clearTimeout(equalHoldTimer); }
 
         function formatNum(num) {
-            if (!num) return "";
-            // Handle negative numbers and decimals
+            if (!num && num !== 0) return "";
             let str = num.toString();
             let parts = str.split('.');
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -278,41 +322,41 @@
         function handlePress(val) {
             if (magicMode) {
                 if (val === '=') { if (equalHoldTriggered) evaluate(); else inject(); }
-                // Allow explicit backspace in magic mode to not break flow if needed, or just ignore. 
-                // Original code ignored inputs. keeping consistent.
                 return;
             }
-            justEvaluated = false; 
-            const cur = getTotal(), tgt = parseFloat(config[config.activeSlot] || 0);
             
-            // Reset colors
-            display.style.color = "var(--text-color)"; 
+            if (justEvaluated) {
+                if (['+', '-', '*', '/'].includes(val)) {
+                    justEvaluated = false;
+                    inputDisplay.style.color = "var(--text-color)";
+                    previewDisplay.innerText = "";
+                } else if (val !== '=' && val !== 'back') {
+                    currentInput = "";
+                    equationArr = [];
+                    justEvaluated = false;
+                    inputDisplay.style.color = "var(--text-color)";
+                    previewDisplay.innerText = "";
+                }
+            }
             
             if (val === 'AC') { 
                 currentInput = ""; equationArr = []; magicMode = false; lastTappedOp = ""; indicator.style.display = 'none'; 
+                previewDisplay.innerText = "";
             }
             else if (val === 'back') { 
                 if (currentInput !== "") currentInput = currentInput.slice(0, -1); 
                 else if (equationArr.length > 0) {
-                    // removing operator
-                    equationArr.pop();
-                    // Move last number back to currentInput for editing
-                    if(equationArr.length > 0) {
-                         currentInput = equationArr.pop();
-                    }
+                    equationArr.pop(); // Remove op
+                    if(equationArr.length > 0) currentInput = equationArr.pop(); // Pop previous number back to edit
                 }
             }
-            else if (val === 'paren') {
-                // Aesthetic only - do nothing or toggle parens. 
-                // User said "doesn't need to function". Leaving empty.
+            else if (val === 'paren') { 
+                // Aesthetic only, per request
             }
             else if (val === '=') { evaluate(); return; } 
             else if (['+', '-', '*', '/'].includes(val)) {
-                if (masterActive && ((val === '+' && tgt > cur) || (val === '-' && tgt < cur))) setup();
                 let op = val==='*'?'×':val==='/'?'÷':val==='-'?'−':'+';
-                
-                if (currentInput === "" && equationArr.length > 0 && ['×','÷','−','+'].includes(equationArr[equationArr.length-1])) {
-                    // Replace operator
+                if (currentInput === "" && equationArr.length > 0) {
                     equationArr[equationArr.length-1] = op;
                 } else {
                     if (currentInput !== "") equationArr.push(currentInput);
@@ -329,14 +373,9 @@
             let res = isM ? config[config.activeSlot] : getTotal();
             if (isM) { masterActive = false; document.getElementById('masterToggle').checked = false; }
             
-            // Clear history for single result view
-            historyDisplay.innerHTML = ""; 
-            
-            // Format result with commas
-            display.innerText = formatNum(res);
-            
-            // Set Green Color for result
-            display.style.color = "var(--green)"; 
+            inputDisplay.innerHTML = formatNum(res);
+            inputDisplay.style.color = "var(--green)"; // Final Result Green
+            previewDisplay.innerText = "";
             
             currentInput = res.toString(); 
             equationArr = []; 
@@ -346,10 +385,8 @@
 
         function getTotal() {
             try {
-                // Remove commas for eval
                 let cleanEq = equationArr.map(x => x.replace(/,/g, ''));
                 let cleanInput = currentInput.replace(/,/g, '');
-                
                 let s = (cleanEq.join('') + cleanInput).replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
                 if (!s) return 0;
                 if (/[\+\-\*\/]$/.test(s)) s = s.slice(0, -1);
@@ -360,42 +397,77 @@
         function updateUI() {
             if (justEvaluated) return; 
             
-            let h = "";
-            // Build visual string for history/display area
-            // We will render equationArr + currentInput
-            
-            const renderPart = (part, isOp) => {
-                if (isOp) return `<span class="op-green">${part}</span>`;
-                return formatNum(part);
-            };
+            // --- 1. Construct HTML for Wrapping ---
+            let combined = [...equationArr];
+            if (currentInput !== "") combined.push(currentInput);
 
-            equationArr.forEach(item => {
-                if (['+','−','×','÷'].includes(item)) {
-                    h += renderPart(item, true);
+            let renderHtml = "";
+            let charCount = 0; // Count chars for sizing
+
+            for (let i = 0; i < combined.length; i++) {
+                let val = combined[i];
+                let isOp = ['+','−','×','÷'].includes(val);
+                let displayVal = isOp ? val : formatNum(val);
+                
+                // Count plain characters (no commas)
+                charCount += val.length; 
+
+                if (i === 0 && !isOp) {
+                     // First number (loose)
+                     renderHtml += `<span>${displayVal}</span>`;
+                } else if (isOp) {
+                    // Logic: Group [Op + Number] together
+                    let nextNum = (i + 1 < combined.length) ? combined[i+1] : "";
+                    let nextIsOp = ['+','−','×','÷'].includes(nextNum);
+                    
+                    if (!nextIsOp) {
+                        // Standard Case: Op + Number
+                        let nextValFormatted = formatNum(nextNum);
+                        renderHtml += `<span class="term"><span class="op-green">${val}</span>${nextValFormatted}</span>`;
+                        charCount += nextNum.length;
+                        i++; // Skip next num in loop
+                    } else {
+                        // Edge Case: Op followed by Op (typing)
+                        renderHtml += `<span class="op-green">${val}</span>`;
+                    }
                 } else {
-                    h += renderPart(item, false);
+                    // Fallback
+                    renderHtml += `<span>${displayVal}</span>`;
                 }
-            });
+            }
 
-            // Add current typing
-            h += formatNum(currentInput);
+            inputDisplay.innerHTML = renderHtml || "0";
+            
+            // --- 2. Dynamic Font Sizing ---
+            // 0-12 chars: 55px (Base)
+            // 13-25 chars: Linear reduction
+            // >25 chars: Cap at 34px (Min)
+            
+            let newSize = 55;
+            
+            if (charCount > 12) {
+                // Calculate reduction
+                // We have a buffer of 13 characters (25-12) to drop ~21px (55-34)
+                // Step size approx 1.7px per char
+                let reduction = (charCount - 12) * 1.7;
+                newSize = 55 - reduction;
+                
+                if (newSize < 34) newSize = 34; // Min Cap
+            }
+            inputDisplay.style.fontSize = newSize + "px";
 
-            // In Samsung style, the equation builds up. 
-            // We'll put the full equation in historyDisplay for now, 
-            // and if there is a pending calculation, we might show partial result in display?
-            // User requested "Inputted operator should be displayed in green eg 2+45". 
-            // This implies the main view shows the equation.
-            
-            // Let's put the full building equation in the #display to match user request 11 & 12 directly.
-            // But we have two divs. Let's use #display for the main interaction.
-            
-            display.innerHTML = h || "0"; 
-            historyDisplay.innerHTML = ""; // Clear separate history to mimic single area focus or use it for result preview if needed.
-            // For strict adherence to "mimic samsung", usually top is history, bottom is current. 
-            // But user example "2+45" (green +) implies inline styling.
-            
-            // Correction: If we put HTML in display, we must ensure handlePress doesn't break.
-            // display.innerText overrides innerHTML. changed to innerHTML above.
+            // --- 3. Preview Logic ---
+            let showPreview = false;
+            // Show if we have at least 2 items (Num, Op) AND currentInput is started
+            // OR if we have 3 items (Num, Op, Num...)
+            if (equationArr.length >= 2 && currentInput !== "") showPreview = true;
+            if (equationArr.length >= 3) showPreview = true;
+
+            if (showPreview) {
+                previewDisplay.innerText = formatNum(getTotal());
+            } else {
+                previewDisplay.innerText = "";
+            }
         }
 
         function setup() {
@@ -405,7 +477,14 @@
         }
 
         window.addEventListener('deviceorientation', (e) => {
-            if (Math.abs(e.beta) > 160 && !isFaceDown) { isFaceDown = true; if (masterActive && !magicMode) trigger(); }
+            // Trigger Check: Only if last input was an operator
+            // (meaning currentInput is empty, but we have an equation started)
+            let isLastOp = (currentInput === "" && equationArr.length > 0);
+            
+            if (Math.abs(e.beta) > 160 && !isFaceDown) { 
+                isFaceDown = true; 
+                if (masterActive && !magicMode && isLastOp) trigger(); 
+            }
             else if (Math.abs(e.beta) < 100) isFaceDown = false;
         });
 
@@ -452,3 +531,4 @@
     </script>
 </body>
 </html>
+
