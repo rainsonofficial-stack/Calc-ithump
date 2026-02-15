@@ -17,7 +17,8 @@
             /* Lighter Grey */
             --icon-grey: #a6a6a6; 
             --preview-grey: #a6a6a6;
-            --base-font-size: 55px; 
+            /* CHANGE 1: Reduced starting font size */
+            --base-font-size: 50px; 
         }
 
         body.android-theme { --green: #2bb11b; }
@@ -63,7 +64,8 @@
         #preview-display {
             min-height: 1.2em;
             margin-top: 20px;
-            font-size: 35px;
+            /* CHANGE 2: Set strictly smaller than min-font-size of input */
+            font-size: 22px;
             color: var(--preview-grey);
             font-weight: 400;
             text-align: right;
