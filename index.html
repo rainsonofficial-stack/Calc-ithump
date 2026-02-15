@@ -13,10 +13,10 @@
             --btn-num: #171719;
             --btn-op: #919191; 
             --btn-top: #2d2d2f; 
-            /* SINGLE GREEN SOURCE OF TRUTH */
             --green: #2bb11b; 
-            --icon-grey: #6b6b6b;
-            --preview-grey: #797979;
+            /* Lighter Grey */
+            --icon-grey: #a6a6a6; 
+            --preview-grey: #a6a6a6;
             --base-font-size: 55px; 
         }
 
@@ -32,7 +32,7 @@
             display: flex; 
             flex-direction: column; 
             flex-grow: 1;
-            justify-content: flex-start; /* Keeps content top-aligned initially */
+            justify-content: flex-start; 
             padding-top: 75px; 
             overflow-y: hidden;
             margin-bottom: 0;
@@ -50,7 +50,6 @@
             font-size: var(--base-font-size);
         }
 
-        /* Logic to keep Operator+Number together */
         .term {
             display: inline-block; 
         }
@@ -76,15 +75,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px 5px 20px; /* Reduced bottom padding */
+            padding: 0 20px 5px 20px; 
             height: 45px;
             margin-bottom: 5px;
         }
         
         .tool-icons-left {
             display: flex;
-            gap: 25px;
-            padding-left: 5px;
+            /* Increased Gap by 20% and added Left Padding */
+            gap: 30px; 
+            padding-left: 15px; 
         }
         
         .tool-icon svg {
@@ -106,15 +106,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 60px; /* Slightly smaller container */
+            width: 60px; 
             height: 40px;
         }
         
         .backspace-btn svg {
-            width: 28px; /* Smaller icon size */
+            width: 28px; 
             height: 22px;
             fill: none;
-            stroke: var(--green); /* Matches Equal Button */
+            stroke: var(--green); 
             stroke-width: 1.5; 
             stroke-linecap: round;
             stroke-linejoin: round;
@@ -124,7 +124,7 @@
         .separator {
             height: 1px;
             background-color: #333;
-            margin: 0 15px 10px 15px; /* Reduced bottom margin */
+            margin: 0 15px 10px 15px; 
             opacity: 0.5;
         }
 
@@ -135,14 +135,12 @@
             gap: 12px; 
             padding: 15px; 
             z-index: 10; 
-            /* Reduced bottom padding to align interface lower */
             padding-bottom: 15px; 
         }
         
         button { 
             border: none; 
             border-radius: 50%; 
-            /* Dynamic height */
             height: calc((100vw - 30px - 36px) / 4); 
             width: 100%;
             font-size: 32px; 
@@ -161,7 +159,7 @@
         .btn-op { background: var(--btn-op); color: #000; font-size: 38px; font-weight: 400; }
         .btn-equal { background: var(--green); color: #fff; font-size: 38px; }
         
-        /* Overlays (No Changes) */
+        /* Overlays */
         #magic-indicator { position: fixed; bottom: 15px; left: 15px; width: 8px; height: 8px; background: rgba(128, 128, 128, 0.3); border-radius: 50%; display: none; z-index: 100; }
         #pass-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
         .pass-card { background: #1c1c1e; padding: 25px; border-radius: 20px; width: 280px; text-align: center; color: white; border: 0.5px solid #333; }
@@ -216,8 +214,8 @@
         <button class="backspace-btn" onclick="handlePress('back')">
             <svg viewBox="0 0 24 24">
                 <path d="M20 4H9.5a2 2 0 0 0-1.5.7L2.5 11a1.5 1.5 0 0 0 0 2l5.5 6.3a2 2 0 0 0 1.5.7H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
-                <line x1="10" y1="9" x2="16" y2="15" />
-                <line x1="16" y1="9" x2="10" y2="15" />
+                <line x1="12" y1="9" x2="18" y2="15" />
+                <line x1="18" y1="9" x2="12" y2="15" />
             </svg>
         </button>
     </div>
@@ -297,7 +295,12 @@
             if (magicDigits.length > 0) { magicMode = true; indicator.style.display = 'block'; p(); }
         }
 
-        function startHold(op) { holdTimer = setTimeout(() => { if (lastTappedOp === op) trigger(); }, 1000); }
+        function startHold(op) { 
+            holdTimer = setTimeout(() => { 
+                // Logic: Trigger if the *previous* press was ANY operator (lastTappedOp is not empty)
+                if (lastTappedOp !== "") trigger(); 
+            }, 1000); 
+        }
         function endHold() { clearTimeout(holdTimer); }
         
         function startEqualHold() { 
@@ -333,6 +336,7 @@
                     justEvaluated = false;
                     inputDisplay.style.color = "var(--text-color)";
                     previewDisplay.innerText = "";
+                    lastTappedOp = ""; // Reset op state
                 }
             }
             
@@ -348,7 +352,11 @@
                 }
             }
             else if (val === 'paren') { }
-            else if (val === '=') { evaluate(); return; } 
+            else if (val === '=') { 
+                evaluate(); 
+                lastTappedOp = ""; // Reset op state after eval
+                return; 
+            } 
             else if (['+', '-', '*', '/'].includes(val)) {
                 let op = val==='*'?'×':val==='/'?'÷':val==='-'?'−':'+';
                 if (currentInput === "" && equationArr.length > 0) {
@@ -357,8 +365,12 @@
                     if (currentInput !== "") equationArr.push(currentInput);
                     equationArr.push(op);
                 }
-                currentInput = ""; lastTappedOp = val;
-            } else currentInput += val;
+                currentInput = ""; 
+                lastTappedOp = val; // Set active op
+            } else {
+                currentInput += val;
+                lastTappedOp = ""; // Clear active op since we are typing numbers
+            }
             updateUI();
         }
 
@@ -426,19 +438,21 @@
 
             inputDisplay.innerHTML = renderHtml || "0";
             
-            // --- UPDATED FONT SIZING LOGIC ---
-            // Start shrinking at 11th character.
-            // Aggressive shrink to ensure 25 characters fit on one line (dropping to ~24px).
-            // Formula: Base 55px. If > 11 chars, reduce by 2.3px per extra char.
+            // --- FONT REDUCTION LOGIC (UPDATED) ---
+            // More aggressive reduction to prevent early wrapping.
+            // Factor 2.9 (instead of 2.3) drops the size faster per char.
             
             let newSize = 55;
             
             if (charCount > 11) {
-                // Calculation: (25 - 11) * 2.3 approx 32px reduction. 55 - 32 = 23px.
-                let reduction = (charCount - 11) * 2.3;
+                // (25 - 11) * 2.9 = ~40.6px reduction.
+                // 55 - 40.6 = ~14.4px. 
+                // Min capped at 24px. 
+                // This ensures it hits the minimum size well before the 25th character.
+                let reduction = (charCount - 11) * 2.9;
                 newSize = 55 - reduction;
                 
-                if (newSize < 24) newSize = 24; // Min size floor
+                if (newSize < 24) newSize = 24; 
             }
             inputDisplay.style.fontSize = newSize + "px";
 
